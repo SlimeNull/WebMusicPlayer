@@ -1,0 +1,188 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:models="clr-namespace:WebMusicPlayer.Models"
+             xmlns:views="clr-namespace:WebMusicPlayer.Views"
+             xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
+             x:Class="WebMusicPlayer.Views.MainPage"
+             x:Name="RootPage"
+             Shell.NavBarIsVisible="False"
+             BackgroundColor="{AppThemeBinding Light=#F7F7FB, Dark=#101014}">
+
+    <Grid RowDefinitions="Auto,Auto,*,Auto,1">
+        <Border Grid.Row="0"
+                StrokeThickness="0"
+                BackgroundColor="{AppThemeBinding Light=White, Dark=#191920}"
+                Padding="16,18,16,10">
+            <Grid ColumnDefinitions="*,Auto,Auto"
+                  ColumnSpacing="8">
+                <VerticalStackLayout Spacing="2">
+                    <Label Text="{Binding CurrentPageTitle}"
+                           FontFamily="OpenSansSemibold"
+                           FontSize="26" />
+                    <Label Text="WebMusicPlayer"
+                           FontSize="12"
+                           Opacity="0.68" />
+                </VerticalStackLayout>
+
+                <Button Grid.Column="1"
+                        Text="⌕"
+                        FontSize="18"
+                        WidthRequest="44"
+                        HeightRequest="44"
+                        Padding="0"
+                        CornerRadius="22"
+                        IsVisible="{Binding ShowStreamsToolbar}"
+                        Clicked="OnFilterClicked" />
+
+                <Button Grid.Column="2"
+                        Text="⋮"
+                        FontSize="20"
+                        WidthRequest="44"
+                        HeightRequest="44"
+                        Padding="0"
+                        CornerRadius="22"
+                        IsVisible="{Binding ShowStreamsToolbar}"
+                        Clicked="OnStreamsMenuClicked" />
+
+                <Button Grid.Column="1"
+                        Text="⟳"
+                        FontSize="18"
+                        WidthRequest="44"
+                        HeightRequest="44"
+                        Padding="0"
+                        CornerRadius="22"
+                        IsVisible="{Binding ShowSubscriptionsToolbar}"
+                        Clicked="OnUpdateSubscriptionsClicked" />
+
+                <Button Grid.Column="2"
+                        Text="⋮"
+                        FontSize="20"
+                        WidthRequest="44"
+                        HeightRequest="44"
+                        Padding="0"
+                        CornerRadius="22"
+                        IsVisible="{Binding ShowSubscriptionsToolbar}"
+                        Clicked="OnSubscriptionsMenuClicked" />
+            </Grid>
+        </Border>
+
+        <Grid Grid.Row="1"
+              Padding="16,8,16,12"
+              ColumnDefinitions="*,*,*"
+              ColumnSpacing="10">
+            <Button Grid.Column="0"
+                    Text="★ Favs"
+                    Command="{Binding SelectTabCommand}"
+                    CommandParameter="Favourites"
+                    BackgroundColor="{AppThemeBinding Light=#EAE7FB, Dark=#262033}"
+                    TextColor="{AppThemeBinding Light=#242424, Dark=White}">
+                <Button.Triggers>
+                    <DataTrigger TargetType="Button"
+                                 Binding="{Binding SelectedTab}"
+                                 Value="{x:Static models:AppTab.Favourites}">
+                        <Setter Property="BackgroundColor" Value="{AppThemeBinding Light=#512BD4, Dark=#AC99EA}" />
+                        <Setter Property="TextColor" Value="White" />
+                    </DataTrigger>
+                </Button.Triggers>
+            </Button>
+
+            <Button Grid.Column="1"
+                    Text="♫ Streams"
+                    Command="{Binding SelectTabCommand}"
+                    CommandParameter="Streams"
+                    BackgroundColor="{AppThemeBinding Light=#EAE7FB, Dark=#262033}"
+                    TextColor="{AppThemeBinding Light=#242424, Dark=White}">
+                <Button.Triggers>
+                    <DataTrigger TargetType="Button"
+                                 Binding="{Binding SelectedTab}"
+                                 Value="{x:Static models:AppTab.Streams}">
+                        <Setter Property="BackgroundColor" Value="{AppThemeBinding Light=#512BD4, Dark=#AC99EA}" />
+                        <Setter Property="TextColor" Value="White" />
+                    </DataTrigger>
+                </Button.Triggers>
+            </Button>
+
+            <Button Grid.Column="2"
+                    Text="☁ Subs"
+                    Command="{Binding SelectTabCommand}"
+                    CommandParameter="Subscriptions"
+                    BackgroundColor="{AppThemeBinding Light=#EAE7FB, Dark=#262033}"
+                    TextColor="{AppThemeBinding Light=#242424, Dark=White}">
+                <Button.Triggers>
+                    <DataTrigger TargetType="Button"
+                                 Binding="{Binding SelectedTab}"
+                                 Value="{x:Static models:AppTab.Subscriptions}">
+                        <Setter Property="BackgroundColor" Value="{AppThemeBinding Light=#512BD4, Dark=#AC99EA}" />
+                        <Setter Property="TextColor" Value="White" />
+                    </DataTrigger>
+                </Button.Triggers>
+            </Button>
+        </Grid>
+
+        <Grid Grid.Row="2"
+              Padding="16,0,16,0">
+            <views:FavouritesPage IsVisible="{Binding IsFavouritesVisible}" />
+            <views:StreamsPage IsVisible="{Binding IsStreamsVisible}" />
+            <views:SubscriptionsPage IsVisible="{Binding IsSubscriptionsVisible}" />
+        </Grid>
+
+        <Border Grid.Row="3"
+                Margin="16,12,16,16"
+                StrokeThickness="0"
+                BackgroundColor="{AppThemeBinding Light=White, Dark=#1B1B22}"
+                Padding="14,12">
+            <Border.StrokeShape>
+                <RoundRectangle CornerRadius="14"/>
+            </Border.StrokeShape>
+            <Border.Shadow>
+                <Shadow Brush="#88000000"
+                        Offset="0,3"
+                        Radius="12"
+                        Opacity="0.18" />
+            </Border.Shadow>
+            <Grid ColumnDefinitions="*,Auto"
+                  ColumnSpacing="12">
+                <VerticalStackLayout Spacing="4">
+                    <Label Text="{Binding CurrentStreamName}"
+                           FontFamily="OpenSansSemibold"
+                           FontSize="16" />
+                    <Label Text="{Binding CurrentStreamSubtitle}"
+                           FontSize="12"
+                           Opacity="0.72" />
+                </VerticalStackLayout>
+
+                <Button Grid.Column="1"
+                        Text="{Binding PlaybackButtonText}"
+                        Command="{Binding TogglePlaybackCommand}"
+                        VerticalOptions="Center" />
+            </Grid>
+        </Border>
+
+        <toolkit:MediaElement Grid.Row="4"
+                              x:Name="Player"
+                              HeightRequest="1"
+                              WidthRequest="1"
+                              Opacity="0.01"
+                              ShouldAutoPlay="False"
+                              ShouldShowPlaybackControls="False"
+                              MediaEnded="OnPlayerMediaEnded"
+                              MediaFailed="OnPlayerMediaFailed"
+                              MediaOpened="OnPlayerMediaOpened" />
+
+        <Grid Grid.RowSpan="5"
+              BackgroundColor="#66000000"
+              IsVisible="{Binding IsBusy}">
+            <VerticalStackLayout HorizontalOptions="Center"
+                                 VerticalOptions="Center"
+                                 Spacing="12">
+                <ActivityIndicator IsRunning="{Binding IsBusy}"
+                                   WidthRequest="44"
+                                   HeightRequest="44" />
+                <Label Text="{Binding BusyText}"
+                       TextColor="White"
+                       HorizontalTextAlignment="Center" />
+            </VerticalStackLayout>
+        </Grid>
+    </Grid>
+</ContentPage>

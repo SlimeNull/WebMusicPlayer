@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="WebMusicPlayer.Views.StreamsPage"
+             x:Name="StreamsRoot">
+
+    <Grid RowDefinitions="Auto,*">
+        <Border StrokeThickness="0"
+                BackgroundColor="{AppThemeBinding Light=#F1EEFF, Dark=#1E1830}"
+                Padding="14,12"
+                Margin="0,0,0,12">
+            <Border.StrokeShape>
+                <RoundRectangle CornerRadius="8"/>
+            </Border.StrokeShape>
+            <VerticalStackLayout Spacing="4">
+                <Label Text="{Binding StreamsSummaryText}"
+                       FontSize="13"
+                       Opacity="0.82" />
+                <Label Text="点按即可播放；左滑可喜欢或取消喜欢，右滑可删除。"
+                       FontSize="12"
+                       Opacity="0.65" />
+            </VerticalStackLayout>
+        </Border>
+
+        <CollectionView Grid.Row="1"
+                        ItemsSource="{Binding VisibleStreams}"
+                        SelectionMode="None">
+            <CollectionView.EmptyView>
+                <VerticalStackLayout Padding="24"
+                                     Spacing="10"
+                                     VerticalOptions="Center">
+                    <Label Text="♫ 还没有媒体流"
+                           FontFamily="OpenSansSemibold"
+                           FontSize="18"
+                           HorizontalTextAlignment="Center" />
+                    <Label Text="点击右上角菜单，手动添加或导入 XSPF / ZIP。"
+                           HorizontalTextAlignment="Center"
+                           Opacity="0.72" />
+                </VerticalStackLayout>
+            </CollectionView.EmptyView>
+
+            <CollectionView.ItemTemplate>
+                <DataTemplate>
+                    <SwipeView Margin="0,0,0,12">
+                        <SwipeView.LeftItems>
+                            <SwipeItems >
+                                <SwipeItem Text="{Binding FavouriteActionText}"
+                                           BackgroundColor="#F59E0B"
+                                           Command="{Binding Source={x:Reference StreamsRoot}, Path=BindingContext.ToggleFavouriteCommand}"
+                                           CommandParameter="{Binding .}" />
+                            </SwipeItems>
+                        </SwipeView.LeftItems>
+
+                        <SwipeView.RightItems>
+                            <SwipeItems >
+                                <SwipeItem Text="删除"
+                                           BackgroundColor="#DC2626"
+                                           Invoked="OnDeleteStreamInvoked" />
+                            </SwipeItems>
+                        </SwipeView.RightItems>
+
+                        <Border StrokeThickness="0"
+                                BackgroundColor="{AppThemeBinding Light=White, Dark=#1B1B22}"
+                                Padding="16,14">
+                            <Border.StrokeShape>
+                                <RoundRectangle CornerRadius="8"/>
+                            </Border.StrokeShape>
+                            <Grid RowDefinitions="Auto,Auto,Auto"
+                                  ColumnDefinitions="*,Auto"
+                                  RowSpacing="6">
+                                <HorizontalStackLayout Spacing="8">
+                                    <Label Text="{Binding Name}"
+                                           FontFamily="OpenSansSemibold"
+                                           FontSize="16" />
+                                    <Label Text="{Binding OriginLabel}"
+                                           VerticalOptions="Center"
+                                           FontSize="11" 
+                                           Opacity="0.3"/>
+                                </HorizontalStackLayout>
+                                <Label Grid.Column="1"
+                                       Text="{Binding FavouriteGlyph}"
+                                       FontSize="20"
+                                       TextColor="#F59E0B"
+                                       VerticalTextAlignment="Center" />
+                                <Label Grid.Row="1"
+                                       Grid.ColumnSpan="2"
+                                       Text="{Binding Url}"
+                                       FontSize="12"
+                                       LineBreakMode="TailTruncation"
+                                       Opacity="0.72" />
+
+                                <Button Grid.RowSpan="3"
+                                        Grid.ColumnSpan="2"
+                                        Text=""
+                                        BackgroundColor="Transparent"
+                                        BorderWidth="0"
+                                        Command="{Binding Source={x:Reference StreamsRoot}, Path=BindingContext.PlayStreamCommand}"
+                                        CommandParameter="{Binding .}" />
+                            </Grid>
+                        </Border>
+                    </SwipeView>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+    </Grid>
+</ContentView>

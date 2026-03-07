@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="WebMusicPlayer.Views.SubscriptionsPage"
+             x:Name="SubscriptionsRoot">
+
+    <Grid RowDefinitions="Auto,*">
+        <Border StrokeThickness="0"
+                BackgroundColor="{AppThemeBinding Light=#F1EEFF, Dark=#1E1830}"
+                Padding="14,12"
+                Margin="0,0,0,12">
+            <Border.StrokeShape>
+                <RoundRectangle CornerRadius="8"/>
+            </Border.StrokeShape>
+            <VerticalStackLayout Spacing="4">
+                <Label Text="{Binding SubscriptionsSummaryText}"
+                       FontSize="13"
+                       Opacity="0.82" />
+                <Label Text="点按一个订阅可以修改；右滑可删除。"
+                       FontSize="12"
+                       Opacity="0.65" />
+            </VerticalStackLayout>
+        </Border>
+
+        <CollectionView Grid.Row="1"
+                        ItemsSource="{Binding Subscriptions}"
+                        SelectionMode="None">
+            <CollectionView.EmptyView>
+                <VerticalStackLayout Padding="24"
+                                     Spacing="10"
+                                     VerticalOptions="Center">
+                    <Label Text="☁ 还没有订阅"
+                           FontFamily="OpenSansSemibold"
+                           FontSize="18"
+                           HorizontalTextAlignment="Center" />
+                    <Label Text="点击右上角菜单添加订阅地址，应用会自动抓取并解析媒体流。"
+                           HorizontalTextAlignment="Center"
+                           Opacity="0.72" />
+                </VerticalStackLayout>
+            </CollectionView.EmptyView>
+
+            <CollectionView.ItemTemplate>
+                <DataTemplate>
+                    <SwipeView Margin="0,0,0,12">
+                        <SwipeView.RightItems>
+                            <SwipeItems Mode="Execute"
+                                        SwipeBehaviorOnInvoked="Close">
+                                <SwipeItem Text="删除"
+                                           BackgroundColor="#DC2626"
+                                           Invoked="OnDeleteSubscriptionInvoked" />
+                            </SwipeItems>
+                        </SwipeView.RightItems>
+
+                        <Border StrokeThickness="0"
+                                BackgroundColor="{AppThemeBinding Light=White, Dark=#1B1B22}"
+                                Padding="16,14">
+                            <Grid RowDefinitions="Auto,Auto,Auto"
+                                  ColumnDefinitions="*,Auto"
+                                  RowSpacing="6">
+                                <Label Text="{Binding Name}"
+                                       FontFamily="OpenSansSemibold"
+                                       FontSize="16" />
+                                <Label Grid.Column="1"
+                                       Text="✎"
+                                       FontSize="18"
+                                       VerticalTextAlignment="Center" />
+                                <Label Grid.Row="1"
+                                       Grid.ColumnSpan="2"
+                                       Text="{Binding Url}"
+                                       FontSize="12"
+                                       LineBreakMode="TailTruncation"
+                                       Opacity="0.72" />
+                                <Label Grid.Row="2"
+                                       Grid.ColumnSpan="2"
+                                       Text="{Binding LastUpdatedLabel}"
+                                       FontSize="12"
+                                       Opacity="0.58" />
+
+                                <Button Grid.RowSpan="3"
+                                        Grid.ColumnSpan="2"
+                                        Text=""
+                                        BackgroundColor="Transparent"
+                                        BorderWidth="0"
+                                        Clicked="OnEditSubscriptionClicked" />
+                            </Grid>
+                        </Border>
+                    </SwipeView>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+    </Grid>
+</ContentView>

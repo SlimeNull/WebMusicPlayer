@@ -34,7 +34,7 @@
 		<ApplicationTitle>Web Music Player</ApplicationTitle>
 
 		<!-- App Identifier -->
-		<ApplicationId>com.companyname.webmusicplayer</ApplicationId>
+		<ApplicationId>com.slimenull.webmusicplayer</ApplicationId>
 
 		<!-- Versions -->
 		<ApplicationDisplayVersion>1.0</ApplicationDisplayVersion>

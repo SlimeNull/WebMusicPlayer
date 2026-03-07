@@ -44,8 +44,7 @@
                 <DataTemplate>
                     <SwipeView Margin="0,0,0,12">
                         <SwipeView.RightItems>
-                            <SwipeItems Mode="Execute"
-                                        SwipeBehaviorOnInvoked="Close">
+                            <SwipeItems>
                                 <SwipeItem Text="删除"
                                            BackgroundColor="#DC2626"
                                            Invoked="OnDeleteSubscriptionInvoked" />

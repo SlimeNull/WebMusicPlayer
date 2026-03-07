@@ -39,9 +39,8 @@
                 <DataTemplate>
                     <SwipeView Margin="0,0,0,12">
                         <SwipeView.LeftItems>
-                            <SwipeItems Mode="Execute"
-                                        SwipeBehaviorOnInvoked="Close">
-                                <SwipeItem Text="归档"
+                            <SwipeItems>
+                                <SwipeItem Text="取消喜欢"
                                            BackgroundColor="#64748B"
                                            Command="{Binding Source={x:Reference FavouritesRoot}, Path=BindingContext.ArchiveFavouriteCommand}"
                                            CommandParameter="{Binding .}" />
@@ -49,9 +48,8 @@
                         </SwipeView.LeftItems>
 
                         <SwipeView.RightItems>
-                            <SwipeItems Mode="Execute"
-                                        SwipeBehaviorOnInvoked="Close">
-                                <SwipeItem Text="归档"
+                            <SwipeItems>
+                                <SwipeItem Text="取消喜欢"
                                            BackgroundColor="#64748B"
                                            Command="{Binding Source={x:Reference FavouritesRoot}, Path=BindingContext.ArchiveFavouriteCommand}"
                                            CommandParameter="{Binding .}" />

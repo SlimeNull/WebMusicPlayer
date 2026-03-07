@@ -17,13 +17,24 @@ public sealed class StreamImportService(HttpClient httpClient)
     {
         using var memoryStream = new MemoryStream();
         await stream.CopyToAsync(memoryStream, cancellationToken);
-        return await ParsePayloadAsync(fileName, memoryStream.ToArray(), null, null, ManualImportOptions, cancellationToken);
+        return await ParsePayloadAsync(fileName, memoryStream.ToArray(), null, null, ManualImportOptions, progress: null, shouldAbort: null, cancellationToken);
     }
 
     public Task<IReadOnlyList<ImportStreamCandidate>> ParseFromAddressAsync(string address, CancellationToken cancellationToken = default)
         => ParseFromAddressAsync(address, SubscriptionImportOptions.Default, cancellationToken);
 
-    public async Task<IReadOnlyList<ImportStreamCandidate>> ParseFromAddressAsync(string address, SubscriptionImportOptions options, CancellationToken cancellationToken = default)
+    public Task<IReadOnlyList<ImportStreamCandidate>> ParseFromAddressAsync(
+        string address,
+        SubscriptionImportOptions options,
+        CancellationToken cancellationToken = default)
+        => ParseFromAddressAsync(address, options, progress: null, shouldAbort: null, cancellationToken);
+
+    public async Task<IReadOnlyList<ImportStreamCandidate>> ParseFromAddressAsync(
+        string address,
+        SubscriptionImportOptions options,
+        IProgress<int>? progress,
+        Func<bool>? shouldAbort,
+        CancellationToken cancellationToken = default)
     {
         if (!Uri.TryCreate(address, UriKind.Absolute, out var uri) || (uri.Scheme != Uri.UriSchemeHttp && uri.Scheme != Uri.UriSchemeHttps))
         {
@@ -36,11 +47,12 @@ public sealed class StreamImportService(HttpClient httpClient)
         var contentType = response.Content.Headers.ContentType?.MediaType;
         if (ShouldTreatAsDirectMedia(uri.AbsoluteUri, contentType))
         {
+            progress?.Report(1);
             return [CreateCandidate(null, uri.AbsoluteUri, GetNameFromUrl(uri.AbsoluteUri))];
         }
 
         var bytes = await response.Content.ReadAsByteArrayAsync(cancellationToken);
-        return await ParsePayloadAsync(uri.AbsolutePath, bytes, uri, contentType, options, cancellationToken);
+        return await ParsePayloadAsync(uri.AbsolutePath, bytes, uri, contentType, options, progress, shouldAbort, cancellationToken);
     }
 
     private async Task<IReadOnlyList<ImportStreamCandidate>> ParsePayloadAsync(
@@ -49,6 +61,8 @@ public sealed class StreamImportService(HttpClient httpClient)
         Uri? sourceUri,
         string? contentType,
         SubscriptionImportOptions options,
+        IProgress<int>? progress,
+        Func<bool>? shouldAbort,
         CancellationToken cancellationToken)
     {
         if (LooksLikeZip(data, fileNameOrHint, contentType))
@@ -66,10 +80,12 @@ public sealed class StreamImportService(HttpClient httpClient)
         if (LooksLikeM3u(text, fileNameOrHint, contentType))
         {
             var playlistName = Path.GetFileNameWithoutExtension(fileNameOrHint);
-            return await ParseM3uPlaylistAsync(text, sourceUri, playlistName, options, cancellationToken);
+            return await ParseM3uPlaylistAsync(text, sourceUri, playlistName, options, progress, shouldAbort, cancellationToken);
         }
 
-        return ParsePlainText(text, Path.GetFileNameWithoutExtension(fileNameOrHint));
+        var directCandidates = ParsePlainText(text, Path.GetFileNameWithoutExtension(fileNameOrHint));
+        progress?.Report(directCandidates.Count);
+        return directCandidates;
     }
 
     private async Task<IReadOnlyList<ImportStreamCandidate>> ParseZipAsync(Stream stream, CancellationToken cancellationToken)
@@ -122,6 +138,8 @@ public sealed class StreamImportService(HttpClient httpClient)
         Uri? playlistUri,
         string? defaultName,
         SubscriptionImportOptions options,
+        IProgress<int>? progress,
+        Func<bool>? shouldAbort,
         CancellationToken cancellationToken)
     {
         var workerCount = Math.Clamp(options.MaxConcurrentRequests, 1, 8);
@@ -147,7 +165,7 @@ public sealed class StreamImportService(HttpClient httpClient)
 
         void EnqueueWork(PlaylistWorkItem workItem)
         {
-            if (Volatile.Read(ref stopRequested) == 1)
+            if (ShouldStop())
             {
                 return;
             }
@@ -181,7 +199,7 @@ public sealed class StreamImportService(HttpClient httpClient)
 
                 try
                 {
-                    if (Volatile.Read(ref stopRequested) == 0)
+                    if (!ShouldStop())
                     {
                         await ProcessWorkItemAsync(workItem);
                     }
@@ -203,7 +221,7 @@ public sealed class StreamImportService(HttpClient httpClient)
 
             if (text is null)
             {
-                if (workItem.PlaylistUri is null || Volatile.Read(ref stopRequested) == 1)
+                if (workItem.PlaylistUri is null || ShouldStop())
                 {
                     return;
                 }
@@ -235,7 +253,7 @@ public sealed class StreamImportService(HttpClient httpClient)
 
             foreach (var entry in EnumeratePlaylistEntries(text!, playlistUriForText))
             {
-                if (Volatile.Read(ref stopRequested) == 1)
+                if (ShouldStop())
                 {
                     return;
                 }
@@ -258,7 +276,7 @@ public sealed class StreamImportService(HttpClient httpClient)
 
         void AddCandidate(ImportStreamCandidate candidate)
         {
-            if (Volatile.Read(ref stopRequested) == 1)
+            if (ShouldStop())
             {
                 return;
             }
@@ -267,6 +285,24 @@ public sealed class StreamImportService(HttpClient httpClient)
             {
                 Interlocked.Exchange(ref stopRequested, 1);
             }
+
+            progress?.Report(candidates.Count);
+        }
+
+        bool ShouldStop()
+        {
+            if (Volatile.Read(ref stopRequested) == 1)
+            {
+                return true;
+            }
+
+            if (shouldAbort?.Invoke() == true)
+            {
+                Interlocked.Exchange(ref stopRequested, 1);
+                return true;
+            }
+
+            return false;
         }
     }
 

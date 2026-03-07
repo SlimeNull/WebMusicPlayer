@@ -10,8 +10,12 @@ public sealed partial class MainViewModel(AppStateStore appStateStore, StreamImp
 {
     private readonly AppStateStore _appStateStore = appStateStore;
     private readonly StreamImportService _streamImportService = streamImportService;
+    private readonly Dictionary<Guid, int> _subscriptionProgressById = [];
     private AppState _state = new();
     private bool _isInitialized;
+    private CancellationTokenSource? _busyOperationCancellationTokenSource;
+    private string _busyBaseText = "请稍候…";
+    private volatile bool _busyOperationAbortRequested;
 
     public ObservableCollection<StreamItem> VisibleStreams { get; } = [];
 
@@ -51,6 +55,14 @@ public sealed partial class MainViewModel(AppStateStore appStateStore, StreamImp
     private string busyText = "请稍候…";
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ShowBusyActions))]
+    private bool canAbortBusyOperation;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ShowBusyActions))]
+    private bool canCancelBusyOperation;
+
+    [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(SelectedFilterLabel))]
     [NotifyPropertyChangedFor(nameof(StreamsSummaryText))]
     private string selectedFilterKey = FilterOption.AllKey;
@@ -86,6 +98,8 @@ public sealed partial class MainViewModel(AppStateStore appStateStore, StreamImp
     public bool ShowSubscriptionsToolbar => SelectedTab == AppTab.Subscriptions;
 
     public bool HasCurrentStream => CurrentStream is not null;
+
+    public bool ShowBusyActions => CanAbortBusyOperation || CanCancelBusyOperation;
 
     public string CurrentStreamName => CurrentStream?.Name ?? "尚未选择媒体流";
 
@@ -235,21 +249,31 @@ public sealed partial class MainViewModel(AppStateStore appStateStore, StreamImp
 
     public async Task UpdateAllSubscriptionsAsync(CancellationToken cancellationToken = default)
     {
-        await RunBusyAsync("正在更新订阅…", async () =>
+        var operationToken = BeginSubscriptionBusyOperation("正在更新订阅…", cancellationToken);
+        try
         {
             var subscriptions = Subscriptions.ToList();
             var throttler = new SemaphoreSlim(Math.Clamp(subscriptions.Count, 1, 4));
             var tasks = subscriptions.Select(async subscription =>
             {
-                await throttler.WaitAsync(cancellationToken);
+                await throttler.WaitAsync(operationToken);
                 try
                 {
-                    cancellationToken.ThrowIfCancellationRequested();
-                    return await FetchSubscriptionSnapshotAsync(subscription, cancellationToken);
+                    operationToken.ThrowIfCancellationRequested();
+                    if (IsBusyOperationAbortRequested())
+                    {
+                        return new SubscriptionRefreshSnapshot(subscription, [], null, false);
+                    }
+
+                    return await FetchSubscriptionSnapshotAsync(subscription, operationToken);
+                }
+                catch (OperationCanceledException ex) when (operationToken.IsCancellationRequested)
+                {
+                    return new SubscriptionRefreshSnapshot(subscription, [], ex, false);
                 }
                 catch (Exception ex)
                 {
-                    return new SubscriptionRefreshSnapshot(subscription, [], ex);
+                    return new SubscriptionRefreshSnapshot(subscription, [], ex, false);
                 }
                 finally
                 {
@@ -258,7 +282,12 @@ public sealed partial class MainViewModel(AppStateStore appStateStore, StreamImp
             });
 
             var snapshots = await Task.WhenAll(tasks);
-            foreach (var snapshot in snapshots.Where(static x => x.Error is null))
+            if (operationToken.IsCancellationRequested)
+            {
+                return;
+            }
+
+            foreach (var snapshot in snapshots.Where(static x => x.Error is null && x.ShouldApply))
             {
                 ApplySubscriptionSnapshot(snapshot);
             }
@@ -271,7 +300,11 @@ public sealed partial class MainViewModel(AppStateStore appStateStore, StreamImp
             {
                 throw new InvalidOperationException($"{failures.Count} 个订阅更新失败。首个错误: {failures[0].Error!.Message}");
             }
-        });
+        }
+        finally
+        {
+            EndBusyOperation();
+        }
     }
 
     public async Task DeleteSubscriptionAsync(SubscriptionItem subscription)
@@ -384,24 +417,65 @@ public sealed partial class MainViewModel(AppStateStore appStateStore, StreamImp
         await SaveStateAsync();
     }
 
+    [RelayCommand]
+    private void AbortBusyOperation()
+    {
+        if (!CanAbortBusyOperation)
+        {
+            return;
+        }
+
+        _busyOperationAbortRequested = true;
+        CanAbortBusyOperation = false;
+        SetBusyTextThreadSafe($"{_busyBaseText} 正在中止… 已解析到 {GetResolvedMediaCount()} 个媒体源");
+    }
+
+    [RelayCommand]
+    private void CancelBusyOperation()
+    {
+        if (!CanCancelBusyOperation)
+        {
+            return;
+        }
+
+        CanAbortBusyOperation = false;
+        CanCancelBusyOperation = false;
+        SetBusyTextThreadSafe("正在取消，不会保存任何已完成的媒体源…");
+        _busyOperationCancellationTokenSource?.Cancel();
+    }
+
     private async Task RefreshSubscriptionAsync(SubscriptionItem subscription, CancellationToken cancellationToken)
     {
-        await RunBusyAsync($"正在更新订阅 {subscription.Name}…", async () =>
+        var operationToken = BeginSubscriptionBusyOperation($"正在更新订阅 {subscription.Name}…", cancellationToken);
+        try
         {
-            var snapshot = await FetchSubscriptionSnapshotAsync(subscription, cancellationToken);
-            ApplySubscriptionSnapshot(snapshot);
-            RefreshAllViews();
-            await SaveStateAsync();
-        });
+            var snapshot = await FetchSubscriptionSnapshotAsync(subscription, operationToken);
+            if (operationToken.IsCancellationRequested)
+            {
+                return;
+            }
+
+            if (snapshot.ShouldApply)
+            {
+                ApplySubscriptionSnapshot(snapshot);
+                RefreshAllViews();
+                await SaveStateAsync();
+            }
+        }
+        finally
+        {
+            EndBusyOperation();
+        }
     }
 
     private async Task<SubscriptionRefreshSnapshot> FetchSubscriptionSnapshotAsync(SubscriptionItem subscription, CancellationToken cancellationToken)
     {
+        var progress = new Progress<int>(count => ReportSubscriptionProgress(subscription, count));
         var candidates = await Task.Run(
-            () => _streamImportService.ParseFromAddressAsync(subscription.Url, subscription.GetImportOptions(), cancellationToken),
+            () => _streamImportService.ParseFromAddressAsync(subscription.Url, subscription.GetImportOptions(), progress, IsBusyOperationAbortRequested, cancellationToken),
             cancellationToken);
 
-        return new SubscriptionRefreshSnapshot(subscription, candidates, null);
+        return new SubscriptionRefreshSnapshot(subscription, candidates, null, true);
     }
 
     private void ApplySubscriptionSnapshot(SubscriptionRefreshSnapshot snapshot)
@@ -544,6 +618,10 @@ public sealed partial class MainViewModel(AppStateStore appStateStore, StreamImp
 
     private async Task RunBusyAsync(string message, Func<Task> action)
     {
+        _busyBaseText = message;
+        _busyOperationAbortRequested = false;
+        CanAbortBusyOperation = false;
+        CanCancelBusyOperation = false;
         BusyText = message;
         IsBusy = true;
         try
@@ -552,8 +630,62 @@ public sealed partial class MainViewModel(AppStateStore appStateStore, StreamImp
         }
         finally
         {
+            CanAbortBusyOperation = false;
+            CanCancelBusyOperation = false;
             IsBusy = false;
         }
+    }
+
+    private CancellationToken BeginSubscriptionBusyOperation(string message, CancellationToken externalCancellationToken)
+    {
+        _busyOperationCancellationTokenSource?.Dispose();
+        _busyOperationCancellationTokenSource = CancellationTokenSource.CreateLinkedTokenSource(externalCancellationToken);
+        _subscriptionProgressById.Clear();
+        _busyOperationAbortRequested = false;
+        _busyBaseText = message;
+        BusyText = message;
+        CanAbortBusyOperation = true;
+        CanCancelBusyOperation = true;
+        IsBusy = true;
+        return _busyOperationCancellationTokenSource.Token;
+    }
+
+    private void EndBusyOperation()
+    {
+        _busyOperationCancellationTokenSource?.Dispose();
+        _busyOperationCancellationTokenSource = null;
+        _subscriptionProgressById.Clear();
+        _busyOperationAbortRequested = false;
+        CanAbortBusyOperation = false;
+        CanCancelBusyOperation = false;
+        IsBusy = false;
+    }
+
+    private void ReportSubscriptionProgress(SubscriptionItem subscription, int count)
+    {
+        _subscriptionProgressById[subscription.Id] = count;
+        SetBusyTextThreadSafe($"{_busyBaseText} 已解析到 {GetResolvedMediaCount()} 个媒体源");
+    }
+
+    private int GetResolvedMediaCount()
+    {
+        return _subscriptionProgressById.Values.Sum();
+    }
+
+    private bool IsBusyOperationAbortRequested()
+    {
+        return _busyOperationAbortRequested;
+    }
+
+    private void SetBusyTextThreadSafe(string text)
+    {
+        if (MainThread.IsMainThread)
+        {
+            BusyText = text;
+            return;
+        }
+
+        MainThread.BeginInvokeOnMainThread(() => BusyText = text);
     }
 
     private static void ReplaceCollection<T>(ObservableCollection<T> target, IEnumerable<T> items)
@@ -620,5 +752,6 @@ public sealed partial class MainViewModel(AppStateStore appStateStore, StreamImp
     private sealed record SubscriptionRefreshSnapshot(
         SubscriptionItem Subscription,
         IReadOnlyList<ImportStreamCandidate> Candidates,
-        Exception? Error);
+        Exception? Error,
+        bool ShouldApply);
 }

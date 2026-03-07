@@ -243,6 +243,19 @@
                 <Label Text="{Binding BusyText}"
                        TextColor="White"
                        HorizontalTextAlignment="Center" />
+            <HorizontalStackLayout Spacing="12"
+                           IsVisible="{Binding ShowBusyActions}">
+                <Button Text="中止"
+                    Command="{Binding AbortBusyOperationCommand}"
+                    IsVisible="{Binding CanAbortBusyOperation}"
+                    BackgroundColor="#F59E0B"
+                    TextColor="White" />
+                <Button Text="取消"
+                    Command="{Binding CancelBusyOperationCommand}"
+                    IsVisible="{Binding CanCancelBusyOperation}"
+                    BackgroundColor="#DC2626"
+                    TextColor="White" />
+            </HorizontalStackLayout>
             </VerticalStackLayout>
         </Grid>
     </Grid>

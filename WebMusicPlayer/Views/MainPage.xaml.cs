@@ -1,4 +1,5 @@
 using CommunityToolkit.Maui.Core;
+using WebMusicPlayer.Localization;
 using WebMusicPlayer.Models;
 using WebMusicPlayer.ViewModels;
 
@@ -34,23 +35,26 @@ public partial class MainPage : ContentPage
         }
         catch (Exception ex)
         {
-            await DisplayAlertAsync("加载失败", ex.Message, "知道了");
+            await DisplayAlertAsync(TranslateExtension.Get("LoadFailedTitle"), ex.Message, TranslateExtension.Get("GenericGotIt"));
         }
     }
 
     private async void OnStreamsMenuClicked(object? sender, EventArgs e)
     {
-        var selection = await DisplayActionSheetAsync("添加媒体流", "取消", null, "手动添加", "导入 XSPF", "导入 ZIP");
+        var manualAdd = TranslateExtension.Get("ActionManualAdd");
+        var importXspf = TranslateExtension.Get("ActionImportXspf");
+        var importZip = TranslateExtension.Get("ActionImportZip");
+        var selection = await DisplayActionSheetAsync(TranslateExtension.Get("ActionAddStreamTitle"), TranslateExtension.Get("GenericCancel"), null, manualAdd, importXspf, importZip);
         switch (selection)
         {
-            case "手动添加":
+            case var _ when selection == manualAdd:
                 await AddManualStreamAsync();
                 break;
-            case "导入 XSPF":
-                await ImportFileAsync("请选择由 VLC 导出的 XSPF 文件");
+            case var _ when selection == importXspf:
+                await ImportFileAsync(TranslateExtension.Get("PickXspfTitle"));
                 break;
-            case "导入 ZIP":
-                await ImportFileAsync("请选择包含 m3u8 或 txt 的 ZIP 压缩包");
+            case var _ when selection == importZip:
+                await ImportFileAsync(TranslateExtension.Get("PickZipTitle"));
                 break;
         }
     }
@@ -71,8 +75,9 @@ public partial class MainPage : ContentPage
 
     private async void OnSubscriptionsMenuClicked(object? sender, EventArgs e)
     {
-        var selection = await DisplayActionSheetAsync("订阅操作", "取消", null, "添加订阅");
-        if (selection == "添加订阅")
+        var addSubscription = TranslateExtension.Get("ActionAddSubscription");
+        var selection = await DisplayActionSheetAsync(TranslateExtension.Get("ActionSubscriptionTitle"), TranslateExtension.Get("GenericCancel"), null, addSubscription);
+        if (selection == addSubscription)
         {
             await AddSubscriptionAsync();
         }
@@ -86,20 +91,20 @@ public partial class MainPage : ContentPage
         }
         catch (Exception ex)
         {
-            await DisplayAlertAsync("更新失败", ex.Message, "知道了");
+            await DisplayAlertAsync(TranslateExtension.Get("UpdateFailedTitle"), ex.Message, TranslateExtension.Get("GenericGotIt"));
         }
     }
 
     private async Task AddManualStreamAsync()
     {
         var result = await EditorFormPage.ShowAsync(this, new EditorFormOptions(
-            Title: "添加媒体流",
-            Subtitle: "输入名称与网络地址，即可将新的 Stream 加入列表。",
-            PrimaryLabel: "媒体流名称",
-            PrimaryPlaceholder: "例如：Jazz Radio",
-            SecondaryLabel: "媒体流地址",
-            SecondaryPlaceholder: "https://example.com/live.m3u8",
-            SaveButtonText: "添加媒体流"));
+            Title: TranslateExtension.Get("EditorAddStreamTitle"),
+            Subtitle: TranslateExtension.Get("EditorAddStreamSubtitle"),
+            PrimaryLabel: TranslateExtension.Get("StreamNameLabel"),
+            PrimaryPlaceholder: TranslateExtension.Get("StreamNamePlaceholder"),
+            SecondaryLabel: TranslateExtension.Get("StreamUrlLabel"),
+            SecondaryPlaceholder: TranslateExtension.Get("StreamUrlPlaceholder"),
+            SaveButtonText: TranslateExtension.Get("EditorAddStreamSave")));
         if (result is null)
         {
             return;
@@ -111,7 +116,7 @@ public partial class MainPage : ContentPage
         }
         catch (Exception ex)
         {
-            await DisplayAlertAsync("添加失败", ex.Message, "知道了");
+            await DisplayAlertAsync(TranslateExtension.Get("AddFailedTitle"), ex.Message, TranslateExtension.Get("GenericGotIt"));
         }
     }
 
@@ -134,7 +139,7 @@ public partial class MainPage : ContentPage
         }
         catch (Exception ex)
         {
-            await DisplayAlertAsync("导入失败", ex.Message, "知道了");
+            await DisplayAlertAsync(TranslateExtension.Get("ImportFailedTitle"), ex.Message, TranslateExtension.Get("GenericGotIt"));
         }
     }
 
@@ -142,9 +147,9 @@ public partial class MainPage : ContentPage
     {
         var result = await SubscriptionEditorPage.ShowAsync(
             this,
-            "添加订阅",
-            "订阅地址可以返回 xspf、m3u8 或 zip，应用会自动解析。",
-            "添加订阅");
+            TranslateExtension.Get("EditorAddSubscriptionTitle"),
+            TranslateExtension.Get("EditorAddSubscriptionSubtitle"),
+            TranslateExtension.Get("EditorAddSubscriptionSave"));
         if (result is null)
         {
             return;
@@ -156,7 +161,7 @@ public partial class MainPage : ContentPage
         }
         catch (Exception ex)
         {
-            await DisplayAlertAsync("添加失败", ex.Message, "知道了");
+            await DisplayAlertAsync(TranslateExtension.Get("AddFailedTitle"), ex.Message, TranslateExtension.Get("GenericGotIt"));
         }
     }
 
@@ -192,6 +197,6 @@ public partial class MainPage : ContentPage
     private async void OnPlayerMediaFailed(object? sender, MediaFailedEventArgs e)
     {
         _viewModel.SetPlaybackState(false);
-        await DisplayAlertAsync("播放失败", e.ErrorMessage ?? "媒体流无法播放。", "知道了");
+        await DisplayAlertAsync(TranslateExtension.Get("PlaybackFailedTitle"), e.ErrorMessage ?? TranslateExtension.Get("PlaybackFailedMessage"), TranslateExtension.Get("GenericGotIt"));
     }
 }

@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:loc="clr-namespace:WebMusicPlayer.Localization"
              xmlns:models="clr-namespace:WebMusicPlayer.Models"
              x:Class="WebMusicPlayer.Views.SubscriptionsPage"
              x:Name="SubscriptionsRoot">
@@ -27,11 +28,11 @@
                 <VerticalStackLayout Padding="24"
                                      Spacing="10"
                                      VerticalOptions="Center">
-                    <Label Text="☁ 还没有订阅"
+                          <Label Text="{loc:Translate SubscriptionsEmptyTitle}"
                            FontFamily="OpenSansSemibold"
                            FontSize="18"
                            HorizontalTextAlignment="Center" />
-                    <Label Text="点击右上角菜单添加订阅地址，应用会自动抓取并解析媒体流。"
+                          <Label Text="{loc:Translate SubscriptionsEmptySubtitle}"
                            HorizontalTextAlignment="Center"
                            Opacity="0.72" />
                 </VerticalStackLayout>
@@ -42,7 +43,7 @@
                     <SwipeView Margin="0,0,0,12">
                         <SwipeView.RightItems>
                             <SwipeItems>
-                                <SwipeItem Text="删除"
+                                <SwipeItem Text="{loc:Translate SwipeDelete}"
                                            BackgroundColor="#DC2626"
                                            Invoked="OnDeleteSubscriptionInvoked" />
                             </SwipeItems>

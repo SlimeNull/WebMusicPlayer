@@ -2,6 +2,7 @@ using System.Collections.Concurrent;
 using System.IO.Compression;
 using System.Text;
 using System.Xml.Linq;
+using WebMusicPlayer.Localization;
 using WebMusicPlayer.Models;
 
 namespace WebMusicPlayer.Services;
@@ -38,7 +39,7 @@ public sealed class StreamImportService(HttpClient httpClient)
     {
         if (!Uri.TryCreate(address, UriKind.Absolute, out var uri) || (uri.Scheme != Uri.UriSchemeHttp && uri.Scheme != Uri.UriSchemeHttps))
         {
-            throw new InvalidOperationException("地址必须是 http 或 https。");
+            throw new InvalidOperationException(TranslateExtension.Get("ValidationHttpOrHttpsOnly"));
         }
 
         using var response = await _httpClient.GetAsync(uri, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
@@ -431,7 +432,7 @@ public sealed class StreamImportService(HttpClient httpClient)
     {
         if (!Uri.TryCreate(url, UriKind.Absolute, out var uri))
         {
-            return "未命名媒体流";
+            return TranslateExtension.Get("UnnamedStream");
         }
 
         var tail = Path.GetFileName(uri.AbsolutePath.TrimEnd('/'));

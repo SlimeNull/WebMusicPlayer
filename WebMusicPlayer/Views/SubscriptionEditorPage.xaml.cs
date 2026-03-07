@@ -1,3 +1,4 @@
+using WebMusicPlayer.Localization;
 using WebMusicPlayer.Models;
 
 namespace WebMusicPlayer.Views;
@@ -59,25 +60,25 @@ public partial class SubscriptionEditorPage : ContentPage
         var url = UrlEntry.Text?.Trim() ?? string.Empty;
         if (string.IsNullOrWhiteSpace(name))
         {
-            ShowError("请输入订阅名称。");
+            ShowError(TranslateExtension.Get("SubscriptionNameRequired"));
             return;
         }
 
         if (string.IsNullOrWhiteSpace(url))
         {
-            ShowError("请输入订阅地址。");
+            ShowError(TranslateExtension.Get("SubscriptionUrlRequired"));
             return;
         }
 
         if (!int.TryParse(DepthEntry.Text?.Trim(), out var maxDepth) || maxDepth < 0 || maxDepth > 32)
         {
-            ShowError("最大递归层数必须是 0 到 32 之间的整数。");
+            ShowError(TranslateExtension.Get("ValidationMaxDepthRange"));
             return;
         }
 
         if (!int.TryParse(CountEntry.Text?.Trim(), out var maxCount) || maxCount <= 0 || maxCount > 200000)
         {
-            ShowError("最大媒体流数量必须是 1 到 200000 之间的整数。");
+            ShowError(TranslateExtension.Get("ValidationMaxCountRange"));
             return;
         }
 

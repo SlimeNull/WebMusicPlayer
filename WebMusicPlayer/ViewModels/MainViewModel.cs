@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using WebMusicPlayer.Localization;
 using WebMusicPlayer.Models;
 using WebMusicPlayer.Services;
 
@@ -14,7 +15,7 @@ public sealed partial class MainViewModel(AppStateStore appStateStore, StreamImp
     private AppState _state = new();
     private bool _isInitialized;
     private CancellationTokenSource? _busyOperationCancellationTokenSource;
-    private string _busyBaseText = "请稍候…";
+    private string _busyBaseText = TranslateExtension.Get("BusyPleaseWait");
     private volatile bool _busyOperationAbortRequested;
 
     public ObservableCollection<StreamItem> VisibleStreams { get; } = [];
@@ -52,7 +53,7 @@ public sealed partial class MainViewModel(AppStateStore appStateStore, StreamImp
     private bool isBusy;
 
     [ObservableProperty]
-    private string busyText = "请稍候…";
+    private string busyText = TranslateExtension.Get("BusyPleaseWait");
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(ShowBusyActions))]
@@ -73,10 +74,10 @@ public sealed partial class MainViewModel(AppStateStore appStateStore, StreamImp
 
     public string CurrentPageTitle => SelectedTab switch
     {
-        AppTab.Favourites => "Favourites",
-        AppTab.Streams => "Streams",
-        AppTab.Subscriptions => "Subscriptions",
-        _ => "WebMusicPlayer"
+        AppTab.Favourites => TranslateExtension.Get("PageTitleFavourites"),
+        AppTab.Streams => TranslateExtension.Get("PageTitleStreams"),
+        AppTab.Subscriptions => TranslateExtension.Get("PageTitleSubscriptions"),
+        _ => TranslateExtension.Get("AppName")
     };
 
     public string CurrentPageIconGlyph => SelectedTab switch
@@ -101,23 +102,23 @@ public sealed partial class MainViewModel(AppStateStore appStateStore, StreamImp
 
     public bool ShowBusyActions => CanAbortBusyOperation || CanCancelBusyOperation;
 
-    public string CurrentStreamName => CurrentStream?.Name ?? "尚未选择媒体流";
+    public string CurrentStreamName => CurrentStream?.Name ?? TranslateExtension.Get("CurrentStreamNoneTitle");
 
-    public string CurrentStreamSubtitle => CurrentStream?.OriginLabel ?? "在 Favourites 或 Streams 中点按一个媒体流开始播放";
+    public string CurrentStreamSubtitle => CurrentStream?.OriginLabel ?? TranslateExtension.Get("CurrentStreamNoneSubtitle");
 
-    public string PlaybackButtonText => IsPlaying ? "停止" : "播放";
+    public string PlaybackButtonText => IsPlaying ? TranslateExtension.Get("PlaybackStop") : TranslateExtension.Get("PlaybackPlay");
 
     public string PlaybackIconGlyph => IsPlaying ? AppIcons.Stop : AppIcons.Play;
 
-    public string SelectedFilterLabel => GetAvailableFilters().FirstOrDefault(option => option.Key == SelectedFilterKey)?.Label ?? "全部来源";
+    public string SelectedFilterLabel => GetAvailableFilters().FirstOrDefault(option => option.Key == SelectedFilterKey)?.Label ?? TranslateExtension.Get("FilterAllSources");
 
     public string StreamsSummaryText => string.IsNullOrWhiteSpace(SelectedFilterKeyword)
-        ? $"当前筛选: {SelectedFilterLabel} · {VisibleStreams.Count} / {_state.Streams.Count} 个媒体流"
-        : $"当前筛选: {SelectedFilterLabel} · 关键字: {SelectedFilterKeyword} · {VisibleStreams.Count} / {_state.Streams.Count} 个媒体流";
+        ? TranslateExtension.Format("StreamsSummaryFormat", SelectedFilterLabel, VisibleStreams.Count, _state.Streams.Count)
+        : TranslateExtension.Format("StreamsSummaryWithKeywordFormat", SelectedFilterLabel, SelectedFilterKeyword, VisibleStreams.Count, _state.Streams.Count);
 
-    public string FavouritesSummaryText => $"已喜欢 {FavouriteStreams.Count} 个媒体流";
+    public string FavouritesSummaryText => TranslateExtension.Format("FavouritesSummaryFormat", FavouriteStreams.Count);
 
-    public string SubscriptionsSummaryText => $"已添加 {Subscriptions.Count} 个订阅";
+    public string SubscriptionsSummaryText => TranslateExtension.Format("SubscriptionsSummaryFormat", Subscriptions.Count);
 
     public bool ShouldConfirmDelete => !_state.DeletePromptSuppressedUntilUtc.HasValue || _state.DeletePromptSuppressedUntilUtc <= DateTimeOffset.UtcNow;
 
@@ -154,8 +155,8 @@ public sealed partial class MainViewModel(AppStateStore appStateStore, StreamImp
     {
         var filters = new List<FilterOption>
         {
-            new(FilterOption.AllKey, "全部来源"),
-            new(FilterOption.ManualKey, "手动添加")
+            new(FilterOption.AllKey, TranslateExtension.Get("FilterAllSources")),
+            new(FilterOption.ManualKey, TranslateExtension.Get("FilterManualAdded"))
         };
 
         filters.AddRange(Subscriptions.Select(subscription => new FilterOption(subscription.Id.ToString(), subscription.Name)));
@@ -198,7 +199,7 @@ public sealed partial class MainViewModel(AppStateStore appStateStore, StreamImp
 
     public async Task ImportManualFileAsync(string fileName, Stream stream, CancellationToken cancellationToken = default)
     {
-        await RunBusyAsync("正在导入媒体流…", async () =>
+        await RunBusyAsync(TranslateExtension.Get("BusyImportingStreams"), async () =>
         {
             var candidates = await _streamImportService.ParseFromFileAsync(fileName, stream, cancellationToken);
             MergeImportedStreams(candidates, StreamOriginKind.Manual, null, null);
@@ -249,7 +250,7 @@ public sealed partial class MainViewModel(AppStateStore appStateStore, StreamImp
 
     public async Task UpdateAllSubscriptionsAsync(CancellationToken cancellationToken = default)
     {
-        var operationToken = BeginSubscriptionBusyOperation("正在更新订阅…", cancellationToken);
+        var operationToken = BeginSubscriptionBusyOperation(TranslateExtension.Get("BusyUpdatingSubscriptions"), cancellationToken);
         try
         {
             var subscriptions = Subscriptions.ToList();
@@ -298,7 +299,7 @@ public sealed partial class MainViewModel(AppStateStore appStateStore, StreamImp
             var failures = snapshots.Where(static x => x.Error is not null).ToList();
             if (failures.Count > 0)
             {
-                throw new InvalidOperationException($"{failures.Count} 个订阅更新失败。首个错误: {failures[0].Error!.Message}");
+                throw new InvalidOperationException(TranslateExtension.Format("BusyUpdateFailuresFormat", failures.Count, failures[0].Error!.Message));
             }
         }
         finally
@@ -427,7 +428,7 @@ public sealed partial class MainViewModel(AppStateStore appStateStore, StreamImp
 
         _busyOperationAbortRequested = true;
         CanAbortBusyOperation = false;
-        SetBusyTextThreadSafe($"{_busyBaseText} 正在中止… 已解析到 {GetResolvedMediaCount()} 个媒体源");
+        SetBusyTextThreadSafe(TranslateExtension.Format("BusyStoppingParsedFormat", _busyBaseText, GetResolvedMediaCount()));
     }
 
     [RelayCommand]
@@ -440,13 +441,13 @@ public sealed partial class MainViewModel(AppStateStore appStateStore, StreamImp
 
         CanAbortBusyOperation = false;
         CanCancelBusyOperation = false;
-        SetBusyTextThreadSafe("正在取消，不会保存任何已完成的媒体源…");
+        SetBusyTextThreadSafe(TranslateExtension.Get("BusyCancelling"));
         _busyOperationCancellationTokenSource?.Cancel();
     }
 
     private async Task RefreshSubscriptionAsync(SubscriptionItem subscription, CancellationToken cancellationToken)
     {
-        var operationToken = BeginSubscriptionBusyOperation($"正在更新订阅 {subscription.Name}…", cancellationToken);
+        var operationToken = BeginSubscriptionBusyOperation(TranslateExtension.Format("BusyUpdatingSubscriptionFormat", subscription.Name), cancellationToken);
         try
         {
             var snapshot = await FetchSubscriptionSnapshotAsync(subscription, operationToken);
@@ -664,7 +665,7 @@ public sealed partial class MainViewModel(AppStateStore appStateStore, StreamImp
     private void ReportSubscriptionProgress(SubscriptionItem subscription, int count)
     {
         _subscriptionProgressById[subscription.Id] = count;
-        SetBusyTextThreadSafe($"{_busyBaseText} 已解析到 {GetResolvedMediaCount()} 个媒体源");
+        SetBusyTextThreadSafe(TranslateExtension.Format("BusyParsedCountFormat", _busyBaseText, GetResolvedMediaCount()));
     }
 
     private int GetResolvedMediaCount()
@@ -702,7 +703,7 @@ public sealed partial class MainViewModel(AppStateStore appStateStore, StreamImp
         if (!Uri.TryCreate(address?.Trim(), UriKind.Absolute, out var uri)
             || (uri.Scheme != Uri.UriSchemeHttp && uri.Scheme != Uri.UriSchemeHttps))
         {
-            throw new InvalidOperationException("地址必须是有效的 http 或 https URL。");
+            throw new InvalidOperationException(TranslateExtension.Get("ValidationHttpUrl"));
         }
 
         return uri.AbsoluteUri;
@@ -712,7 +713,7 @@ public sealed partial class MainViewModel(AppStateStore appStateStore, StreamImp
     {
         if (value < 0 || value > 32)
         {
-            throw new InvalidOperationException("最大递归层数必须在 0 到 32 之间。");
+            throw new InvalidOperationException(TranslateExtension.Get("ValidationMaxDepthRange"));
         }
 
         return value;
@@ -722,7 +723,7 @@ public sealed partial class MainViewModel(AppStateStore appStateStore, StreamImp
     {
         if (value <= 0 || value > 200000)
         {
-            throw new InvalidOperationException("最大媒体流数量必须在 1 到 200000 之间。");
+            throw new InvalidOperationException(TranslateExtension.Get("ValidationMaxCountRange"));
         }
 
         return value;
@@ -746,7 +747,7 @@ public sealed partial class MainViewModel(AppStateStore appStateStore, StreamImp
             return uri.Host;
         }
 
-        return "未命名媒体流";
+        return TranslateExtension.Get("UnnamedStream");
     }
 
     private sealed record SubscriptionRefreshSnapshot(

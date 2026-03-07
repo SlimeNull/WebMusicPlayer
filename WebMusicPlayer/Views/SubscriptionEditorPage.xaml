@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:loc="clr-namespace:WebMusicPlayer.Localization"
              xmlns:models="clr-namespace:WebMusicPlayer.Models"
              x:Class="WebMusicPlayer.Views.SubscriptionEditorPage"
              Shell.NavBarIsVisible="False"
@@ -40,7 +41,7 @@
                                FontSize="13"
                                Opacity="0.74" />
                     </VerticalStackLayout>
-                    <Button Grid.Column="2"
+                        <Button Grid.Column="2"
                             Text="×"
                             WidthRequest="40"
                             HeightRequest="40"
@@ -52,34 +53,34 @@
                 </Grid>
 
                 <VerticalStackLayout Grid.Row="1" Spacing="6">
-                    <Label Text="订阅名称" FontFamily="OpenSansSemibold" FontSize="13" />
+                    <Label Text="{loc:Translate SubscriptionNameLabel}" FontFamily="OpenSansSemibold" FontSize="13" />
                     <Border StrokeThickness="1" Stroke="{AppThemeBinding Light=#DDD7FA, Dark=#3B3453}" BackgroundColor="{AppThemeBinding Light=#FCFBFF, Dark=#23232D}" Padding="12,4">
                         <Border.StrokeShape><RoundRectangle CornerRadius="12" /></Border.StrokeShape>
-                        <Entry x:Name="NameEntry" Placeholder="例如：我的电台合集" ClearButtonVisibility="WhileEditing" ReturnType="Next" Completed="OnNameCompleted" />
+                        <Entry x:Name="NameEntry" Placeholder="{loc:Translate SubscriptionNamePlaceholder}" ClearButtonVisibility="WhileEditing" ReturnType="Next" Completed="OnNameCompleted" />
                     </Border>
                 </VerticalStackLayout>
 
                 <VerticalStackLayout Grid.Row="2" Spacing="6">
-                    <Label Text="订阅地址" FontFamily="OpenSansSemibold" FontSize="13" />
+                    <Label Text="{loc:Translate SubscriptionUrlLabel}" FontFamily="OpenSansSemibold" FontSize="13" />
                     <Border StrokeThickness="1" Stroke="{AppThemeBinding Light=#DDD7FA, Dark=#3B3453}" BackgroundColor="{AppThemeBinding Light=#FCFBFF, Dark=#23232D}" Padding="12,4">
                         <Border.StrokeShape><RoundRectangle CornerRadius="12" /></Border.StrokeShape>
-                        <Entry x:Name="UrlEntry" Placeholder="https://example.com/subscription" ClearButtonVisibility="WhileEditing" Keyboard="Url" ReturnType="Next" Completed="OnUrlCompleted" />
+                        <Entry x:Name="UrlEntry" Placeholder="{loc:Translate SubscriptionUrlPlaceholder}" ClearButtonVisibility="WhileEditing" Keyboard="Url" ReturnType="Next" Completed="OnUrlCompleted" />
                     </Border>
                 </VerticalStackLayout>
 
                 <Grid Grid.Row="3" ColumnDefinitions="*,*" ColumnSpacing="12">
                     <VerticalStackLayout Spacing="6">
-                        <Label Text="最大递归层数" FontFamily="OpenSansSemibold" FontSize="13" />
+                        <Label Text="{loc:Translate SubscriptionMaxDepthLabel}" FontFamily="OpenSansSemibold" FontSize="13" />
                         <Border StrokeThickness="1" Stroke="{AppThemeBinding Light=#DDD7FA, Dark=#3B3453}" BackgroundColor="{AppThemeBinding Light=#FCFBFF, Dark=#23232D}" Padding="12,4">
                             <Border.StrokeShape><RoundRectangle CornerRadius="12" /></Border.StrokeShape>
-                            <Entry x:Name="DepthEntry" Placeholder="例如：6" Keyboard="Numeric" ReturnType="Next" Completed="OnDepthCompleted" />
+                            <Entry x:Name="DepthEntry" Placeholder="{loc:Translate SubscriptionMaxDepthPlaceholder}" Keyboard="Numeric" ReturnType="Next" Completed="OnDepthCompleted" />
                         </Border>
                     </VerticalStackLayout>
                     <VerticalStackLayout Grid.Column="1" Spacing="6">
-                        <Label Text="最大媒体流数量" FontFamily="OpenSansSemibold" FontSize="13" />
+                        <Label Text="{loc:Translate SubscriptionMaxCountLabel}" FontFamily="OpenSansSemibold" FontSize="13" />
                         <Border StrokeThickness="1" Stroke="{AppThemeBinding Light=#DDD7FA, Dark=#3B3453}" BackgroundColor="{AppThemeBinding Light=#FCFBFF, Dark=#23232D}" Padding="12,4">
                             <Border.StrokeShape><RoundRectangle CornerRadius="12" /></Border.StrokeShape>
-                            <Entry x:Name="CountEntry" Placeholder="例如：1000" Keyboard="Numeric" ReturnType="Done" Completed="OnSaveClicked" />
+                            <Entry x:Name="CountEntry" Placeholder="{loc:Translate SubscriptionMaxCountPlaceholder}" Keyboard="Numeric" ReturnType="Done" Completed="OnSaveClicked" />
                         </Border>
                     </VerticalStackLayout>
                 </Grid>
@@ -95,14 +96,14 @@
                         BackgroundColor="{AppThemeBinding Light=#F6F4FF, Dark=#242036}"
                         Padding="12,10">
                     <Border.StrokeShape><RoundRectangle CornerRadius="12" /></Border.StrokeShape>
-                    <Label Text="系统会使用队列解析 m3u/m3u8，并按你设置的递归层数和最大媒体流数量提前停止，避免超大订阅拖垮更新。"
+                          <Label Text="{loc:Translate SubscriptionEditorHint}"
                            FontSize="12"
                            Opacity="0.72" />
                 </Border>
 
                 <Grid Grid.Row="6" ColumnDefinitions="*,*" ColumnSpacing="12" Margin="0,8,0,0">
-                    <Button Grid.Column="0"
-                            Text="取消"
+                        <Button Grid.Column="0"
+                            Text="{loc:Translate GenericCancel}"
                             BackgroundColor="{AppThemeBinding Light=#ECE8FB, Dark=#2D2741}"
                             TextColor="{AppThemeBinding Light=#242424, Dark=White}"
                             Clicked="OnCancelClicked" />

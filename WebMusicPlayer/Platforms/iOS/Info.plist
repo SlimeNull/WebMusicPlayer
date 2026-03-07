@@ -4,6 +4,10 @@
 <dict>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>CFBundleDisplayName</key>
+	<string>Web Music Player</string>
+	<key>CFBundleName</key>
+	<string>Web Music Player</string>
 	<key>UIDeviceFamily</key>
 	<array>
 		<integer>1</integer>

@@ -1,4 +1,5 @@
 using CommunityToolkit.Mvvm.ComponentModel;
+using WebMusicPlayer.Localization;
 
 namespace WebMusicPlayer.Models;
 
@@ -22,11 +23,11 @@ public partial class SubscriptionItem : ObservableObject
     [ObservableProperty]
     private DateTimeOffset? lastUpdatedUtc;
 
-    public string LimitsLabel => $"递归 {MaxPlaylistDepth} 层 · 最多 {MaxStreamCount} 个媒体流";
+    public string LimitsLabel => TranslateExtension.Format("SubscriptionLimitsFormat", MaxPlaylistDepth, MaxStreamCount);
 
     public string LastUpdatedLabel => LastUpdatedUtc.HasValue
-        ? $"上次更新: {LastUpdatedUtc.Value.LocalDateTime:yyyy-MM-dd HH:mm}"
-        : "尚未更新";
+        ? TranslateExtension.Format("SubscriptionLastUpdatedFormat", LastUpdatedUtc.Value.LocalDateTime)
+        : TranslateExtension.Get("SubscriptionLastUpdatedNever");
 
     public SubscriptionImportOptions GetImportOptions() => new(MaxPlaylistDepth, MaxStreamCount);
 

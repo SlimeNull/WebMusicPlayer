@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:loc="clr-namespace:WebMusicPlayer.Localization"
              xmlns:models="clr-namespace:WebMusicPlayer.Models"
              x:Class="WebMusicPlayer.Views.FavouritesPage"
              x:Name="FavouritesRoot">
@@ -25,11 +26,11 @@
                 <VerticalStackLayout Padding="24"
                                      Spacing="10"
                                      VerticalOptions="Center">
-                    <Label Text="★ 还没有喜欢的媒体流"
+                          <Label Text="{loc:Translate FavouritesEmptyTitle}"
                            FontFamily="OpenSansSemibold"
                            FontSize="18"
                            HorizontalTextAlignment="Center" />
-                    <Label Text="在 Streams 页面左滑一个项目，就会出现在这里。"
+                          <Label Text="{loc:Translate FavouritesEmptySubtitle}"
                            HorizontalTextAlignment="Center"
                            Opacity="0.72" />
                 </VerticalStackLayout>
@@ -40,7 +41,7 @@
                     <SwipeView Margin="0,0,0,12">
                         <SwipeView.LeftItems>
                             <SwipeItems>
-                                <SwipeItem Text="取消喜欢"
+                                <SwipeItem Text="{loc:Translate SwipeUnfavourite}"
                                            BackgroundColor="#64748B"
                                            Command="{Binding Source={x:Reference FavouritesRoot}, Path=BindingContext.ArchiveFavouriteCommand}"
                                            CommandParameter="{Binding .}" />
@@ -49,7 +50,7 @@
 
                         <SwipeView.RightItems>
                             <SwipeItems>
-                                <SwipeItem Text="取消喜欢"
+                                <SwipeItem Text="{loc:Translate SwipeUnfavourite}"
                                            BackgroundColor="#64748B"
                                            Command="{Binding Source={x:Reference FavouritesRoot}, Path=BindingContext.ArchiveFavouriteCommand}"
                                            CommandParameter="{Binding .}" />

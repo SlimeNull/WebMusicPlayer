@@ -1,3 +1,4 @@
+using WebMusicPlayer.Localization;
 using WebMusicPlayer.Models;
 
 namespace WebMusicPlayer.Views;
@@ -59,13 +60,13 @@ public partial class EditorFormPage : ContentPage
 
         if (string.IsNullOrWhiteSpace(primary))
         {
-            ShowError($"请输入{PrimaryLabel.Text}。");
+            ShowError(TranslateExtension.Format("ValidationPleaseEnterFieldFormat", PrimaryLabel.Text ?? string.Empty));
             return;
         }
 
         if (string.IsNullOrWhiteSpace(secondary))
         {
-            ShowError($"请输入{SecondaryLabel.Text}。");
+            ShowError(TranslateExtension.Format("ValidationPleaseEnterFieldFormat", SecondaryLabel.Text ?? string.Empty));
             return;
         }
 

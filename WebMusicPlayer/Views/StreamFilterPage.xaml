@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:loc="clr-namespace:WebMusicPlayer.Localization"
              xmlns:models="clr-namespace:WebMusicPlayer.Models"
              x:Class="WebMusicPlayer.Views.StreamFilterPage"
              Shell.NavBarIsVisible="False"
@@ -33,10 +34,10 @@
                            VerticalTextAlignment="Center" />
                     <VerticalStackLayout Grid.Column="1"
                                          Spacing="3">
-                        <Label Text="筛选媒体流"
+                           <Label Text="{loc:Translate FilterDialogTitle}"
                                FontFamily="OpenSansSemibold"
                                FontSize="22" />
-                        <Label Text="可以同时按来源与关键字过滤。关键字会匹配标题或 URL。"
+                           <Label Text="{loc:Translate FilterDialogSubtitle}"
                                FontSize="12"
                                Opacity="0.72" />
                     </VerticalStackLayout>
@@ -53,7 +54,7 @@
 
                 <VerticalStackLayout Grid.Row="1"
                                      Spacing="6">
-                    <Label Text="关键字"
+                          <Label Text="{loc:Translate FilterKeywordLabel}"
                            FontFamily="OpenSansSemibold"
                            FontSize="13" />
                     <Border StrokeThickness="1"
@@ -63,8 +64,8 @@
                         <Border.StrokeShape>
                             <RoundRectangle CornerRadius="12" />
                         </Border.StrokeShape>
-                        <Entry x:Name="KeywordEntry"
-                               Placeholder="输入关键字，匹配标题或 URL"
+                           <Entry x:Name="KeywordEntry"
+                               Placeholder="{loc:Translate FilterKeywordPlaceholder}"
                                ClearButtonVisibility="WhileEditing"
                                ReturnType="Done"
                                Completed="OnApplyClicked" />
@@ -73,10 +74,10 @@
 
                 <VerticalStackLayout Grid.Row="2"
                                      Spacing="6">
-                    <Label Text="媒体流来源"
+                          <Label Text="{loc:Translate FilterSourceLabel}"
                            FontFamily="OpenSansSemibold"
                            FontSize="13" />
-                    <Label Text="选择“全部来源”时，只应用关键字过滤。"
+                          <Label Text="{loc:Translate FilterSourceHint}"
                            FontSize="12"
                            Opacity="0.62" />
                 </VerticalStackLayout>
@@ -90,17 +91,17 @@
                 <Grid Grid.Row="4"
                       ColumnDefinitions="Auto,*,*"
                       ColumnSpacing="12">
-                    <Button Text="重置"
+                        <Button Text="{loc:Translate GenericReset}"
                             BackgroundColor="{AppThemeBinding Light=#ECE8FB, Dark=#2D2741}"
                             TextColor="{AppThemeBinding Light=#242424, Dark=White}"
                             Clicked="OnResetClicked" />
                     <Button Grid.Column="1"
-                            Text="取消"
+                            Text="{loc:Translate GenericCancel}"
                             BackgroundColor="{AppThemeBinding Light=#ECE8FB, Dark=#2D2741}"
                             TextColor="{AppThemeBinding Light=#242424, Dark=White}"
                             Clicked="OnCancelClicked" />
                     <Button Grid.Column="2"
-                            Text="应用筛选"
+                            Text="{loc:Translate FilterApply}"
                             Clicked="OnApplyClicked" />
                 </Grid>
             </Grid>

@@ -1,3 +1,4 @@
+using WebMusicPlayer.Localization;
 using WebMusicPlayer.Models;
 using WebMusicPlayer.ViewModels;
 
@@ -25,9 +26,9 @@ public partial class SubscriptionsPage : ContentView
 
         var result = await SubscriptionEditorPage.ShowAsync(
             page,
-            "编辑订阅",
-            "修改订阅名称、地址或抓取限制后，会重新拉取该订阅的媒体流。",
-            "保存修改",
+            TranslateExtension.Get("EditorEditSubscriptionTitle"),
+            TranslateExtension.Get("EditorEditSubscriptionSubtitle"),
+            TranslateExtension.Get("EditorEditSubscriptionSave"),
             new SubscriptionEditorResult(subscription.Name, subscription.Url, subscription.MaxPlaylistDepth, subscription.MaxStreamCount));
         if (result is null)
         {
@@ -40,7 +41,7 @@ public partial class SubscriptionsPage : ContentView
         }
         catch (Exception ex)
         {
-            await page.DisplayAlertAsync("修改失败", ex.Message, "知道了");
+            await page.DisplayAlertAsync(TranslateExtension.Get("EditFailedTitle"), ex.Message, TranslateExtension.Get("GenericGotIt"));
         }
     }
 
@@ -57,7 +58,11 @@ public partial class SubscriptionsPage : ContentView
             return;
         }
 
-        var confirmed = await page.DisplayAlertAsync("删除订阅", $"要删除订阅 “{subscription.Name}” 以及它带来的媒体流吗？", "删除", "取消");
+        var confirmed = await page.DisplayAlertAsync(
+            TranslateExtension.Get("DeleteSubscriptionConfirmTitle"),
+            TranslateExtension.Format("DeleteSubscriptionConfirmMessageFormat", subscription.Name),
+            TranslateExtension.Get("GenericDelete"),
+            TranslateExtension.Get("GenericCancel"));
         if (!confirmed)
         {
             return;

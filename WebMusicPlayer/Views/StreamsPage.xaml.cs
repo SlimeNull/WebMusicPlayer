@@ -1,3 +1,4 @@
+using WebMusicPlayer.Localization;
 using WebMusicPlayer.Models;
 using WebMusicPlayer.ViewModels;
 
@@ -27,9 +28,12 @@ public partial class StreamsPage : ContentView
                 return;
             }
 
-            var choice = await page.DisplayActionSheetAsync("是否删除此媒体流", "否", null, "是", "是, 并且在接下来的五分钟内不要提醒我");
-            shouldDelete = choice is "是" or "是, 并且在接下来的五分钟内不要提醒我";
-            suppressReminder = choice == "是, 并且在接下来的五分钟内不要提醒我";
+            var no = TranslateExtension.Get("GenericNo");
+            var yes = TranslateExtension.Get("GenericYes");
+            var suppress = TranslateExtension.Get("DeleteStreamConfirmSuppress");
+            var choice = await page.DisplayActionSheetAsync(TranslateExtension.Get("DeleteStreamConfirmTitle"), no, null, yes, suppress);
+            shouldDelete = choice is not null && (choice == yes || choice == suppress);
+            suppressReminder = choice == suppress;
         }
 
         if (!shouldDelete)

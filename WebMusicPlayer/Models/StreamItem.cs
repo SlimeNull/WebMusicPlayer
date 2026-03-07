@@ -1,4 +1,5 @@
 using CommunityToolkit.Mvvm.ComponentModel;
+using WebMusicPlayer.Localization;
 
 namespace WebMusicPlayer.Models;
 
@@ -26,12 +27,12 @@ public partial class StreamItem : ObservableObject
     private string? subscriptionName;
 
     public string OriginLabel => OriginKind == StreamOriginKind.Manual
-        ? "手动添加"
-        : string.IsNullOrWhiteSpace(SubscriptionName) ? "订阅" : SubscriptionName;
+        ? TranslateExtension.Get("OriginManualAdded")
+        : string.IsNullOrWhiteSpace(SubscriptionName) ? TranslateExtension.Get("OriginSubscription") : SubscriptionName;
 
     public string FavouriteGlyph => IsFavourite ? AppIcons.FavouriteFilled : AppIcons.Favourite;
 
-    public string FavouriteActionText => IsFavourite ? "取消喜欢" : "标记喜欢";
+    public string FavouriteActionText => IsFavourite ? TranslateExtension.Get("FavouriteActionRemove") : TranslateExtension.Get("FavouriteActionAdd");
 
     partial void OnOriginKindChanged(StreamOriginKind value) => NotifyComputedProperties();
 

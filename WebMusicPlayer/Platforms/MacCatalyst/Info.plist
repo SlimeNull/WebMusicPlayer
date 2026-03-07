@@ -15,6 +15,10 @@
 	<array>
 		<integer>2</integer>
 	</array>
+	<key>CFBundleDisplayName</key>
+	<string>Web Music Player</string>
+	<key>CFBundleName</key>
+	<string>Web Music Player</string>
 	<key>LSApplicationCategoryType</key>
 	<string>public.app-category.lifestyle</string>
 	<key>UIRequiredDeviceCapabilities</key>

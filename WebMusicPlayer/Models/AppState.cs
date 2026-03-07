@@ -9,4 +9,6 @@ public sealed class AppState
     public DateTimeOffset? DeletePromptSuppressedUntilUtc { get; set; }
 
     public string SelectedFilterKey { get; set; } = FilterOption.AllKey;
+
+    public string SelectedFilterKeyword { get; set; } = string.Empty;
 }

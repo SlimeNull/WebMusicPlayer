@@ -57,12 +57,15 @@ public partial class MainPage : ContentPage
 
     private async void OnFilterClicked(object? sender, EventArgs e)
     {
-        var filters = _viewModel.GetAvailableFilters().ToList();
-        var selection = await DisplayActionSheetAsync("筛选媒体流", "取消", null, filters.Select(filter => filter.Label).ToArray());
-        var selectedFilter = filters.FirstOrDefault(filter => filter.Label == selection);
-        if (selectedFilter is not null)
+        var result = await StreamFilterPage.ShowAsync(
+            this,
+            _viewModel.GetAvailableFilters(),
+            _viewModel.SelectedFilterKey,
+            _viewModel.SelectedFilterKeyword);
+
+        if (result is not null)
         {
-            _viewModel.ApplyFilter(selectedFilter.Key);
+            await _viewModel.ApplyFilterAsync(result.SourceKey, result.Keyword);
         }
     }
 

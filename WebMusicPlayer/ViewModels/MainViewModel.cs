@@ -55,6 +55,10 @@ public sealed partial class MainViewModel(AppStateStore appStateStore, StreamImp
     [NotifyPropertyChangedFor(nameof(StreamsSummaryText))]
     private string selectedFilterKey = FilterOption.AllKey;
 
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(StreamsSummaryText))]
+    private string selectedFilterKeyword = string.Empty;
+
     public string CurrentPageTitle => SelectedTab switch
     {
         AppTab.Favourites => "Favourites",
@@ -93,7 +97,9 @@ public sealed partial class MainViewModel(AppStateStore appStateStore, StreamImp
 
     public string SelectedFilterLabel => GetAvailableFilters().FirstOrDefault(option => option.Key == SelectedFilterKey)?.Label ?? "全部来源";
 
-    public string StreamsSummaryText => $"当前筛选: {SelectedFilterLabel} · {VisibleStreams.Count} / {_state.Streams.Count} 个媒体流";
+    public string StreamsSummaryText => string.IsNullOrWhiteSpace(SelectedFilterKeyword)
+        ? $"当前筛选: {SelectedFilterLabel} · {VisibleStreams.Count} / {_state.Streams.Count} 个媒体流"
+        : $"当前筛选: {SelectedFilterLabel} · 关键字: {SelectedFilterKeyword} · {VisibleStreams.Count} / {_state.Streams.Count} 个媒体流";
 
     public string FavouritesSummaryText => $"已喜欢 {FavouriteStreams.Count} 个媒体流";
 
@@ -112,6 +118,7 @@ public sealed partial class MainViewModel(AppStateStore appStateStore, StreamImp
         _state.Streams ??= [];
         _state.Subscriptions ??= [];
         _state.SelectedFilterKey = string.IsNullOrWhiteSpace(_state.SelectedFilterKey) ? FilterOption.AllKey : _state.SelectedFilterKey;
+        _state.SelectedFilterKeyword = _state.SelectedFilterKeyword?.Trim() ?? string.Empty;
 
         foreach (var stream in _state.Streams)
         {
@@ -124,6 +131,7 @@ public sealed partial class MainViewModel(AppStateStore appStateStore, StreamImp
         }
 
         SelectedFilterKey = _state.SelectedFilterKey;
+        SelectedFilterKeyword = _state.SelectedFilterKeyword;
         RefreshAllViews();
         _isInitialized = true;
     }
@@ -140,9 +148,14 @@ public sealed partial class MainViewModel(AppStateStore appStateStore, StreamImp
         return filters;
     }
 
-    public void ApplyFilter(string key)
+    public async Task ApplyFilterAsync(string key, string? keyword)
     {
         SelectedFilterKey = string.IsNullOrWhiteSpace(key) ? FilterOption.AllKey : key;
+        SelectedFilterKeyword = keyword?.Trim() ?? string.Empty;
+        _state.SelectedFilterKey = SelectedFilterKey;
+        _state.SelectedFilterKeyword = SelectedFilterKeyword;
+        RefreshAllViews();
+        await SaveStateAsync();
     }
 
     public async Task AddManualStreamAsync(string name, string address)
@@ -413,6 +426,7 @@ public sealed partial class MainViewModel(AppStateStore appStateStore, StreamImp
 
         ReplaceCollection(VisibleStreams, filtered);
         _state.SelectedFilterKey = SelectedFilterKey;
+        _state.SelectedFilterKeyword = SelectedFilterKeyword;
     }
 
     private void RefreshFavouriteStreams()
@@ -427,12 +441,31 @@ public sealed partial class MainViewModel(AppStateStore appStateStore, StreamImp
 
     private bool MatchesSelectedFilter(StreamItem stream)
     {
-        return SelectedFilterKey switch
+        var matchesSource = SelectedFilterKey switch
         {
             FilterOption.AllKey => true,
             FilterOption.ManualKey => stream.OriginKind == StreamOriginKind.Manual,
             _ => string.Equals(stream.SubscriptionId?.ToString(), SelectedFilterKey, StringComparison.OrdinalIgnoreCase)
         };
+
+        if (!matchesSource)
+        {
+            return false;
+        }
+
+        if (string.IsNullOrWhiteSpace(SelectedFilterKeyword))
+        {
+            return true;
+        }
+
+        return ContainsKeyword(stream.Name, SelectedFilterKeyword)
+            || ContainsKeyword(stream.Url, SelectedFilterKeyword);
+    }
+
+    private static bool ContainsKeyword(string? source, string keyword)
+    {
+        return !string.IsNullOrWhiteSpace(source)
+            && source.Contains(keyword, StringComparison.CurrentCultureIgnoreCase);
     }
 
     private void RemoveStreamsFromSubscription(Guid subscriptionId)

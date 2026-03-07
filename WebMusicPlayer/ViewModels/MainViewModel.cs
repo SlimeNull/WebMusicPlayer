@@ -25,6 +25,7 @@ public sealed partial class MainViewModel(AppStateStore appStateStore, StreamImp
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(CurrentPageTitle))]
+    [NotifyPropertyChangedFor(nameof(CurrentPageIconGlyph))]
     [NotifyPropertyChangedFor(nameof(IsFavouritesVisible))]
     [NotifyPropertyChangedFor(nameof(IsStreamsVisible))]
     [NotifyPropertyChangedFor(nameof(IsSubscriptionsVisible))]
@@ -40,6 +41,7 @@ public sealed partial class MainViewModel(AppStateStore appStateStore, StreamImp
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(PlaybackButtonText))]
+    [NotifyPropertyChangedFor(nameof(PlaybackIconGlyph))]
     private bool isPlaying;
 
     [ObservableProperty]
@@ -55,10 +57,18 @@ public sealed partial class MainViewModel(AppStateStore appStateStore, StreamImp
 
     public string CurrentPageTitle => SelectedTab switch
     {
-        AppTab.Favourites => "★ Favourites",
-        AppTab.Streams => "♫ Streams",
-        AppTab.Subscriptions => "☁ Subscriptions",
+        AppTab.Favourites => "Favourites",
+        AppTab.Streams => "Streams",
+        AppTab.Subscriptions => "Subscriptions",
         _ => "WebMusicPlayer"
+    };
+
+    public string CurrentPageIconGlyph => SelectedTab switch
+    {
+        AppTab.Favourites => AppIcons.FavouriteFilled,
+        AppTab.Streams => AppIcons.Stream,
+        AppTab.Subscriptions => AppIcons.Subscription,
+        _ => AppIcons.Stream
     };
 
     public bool IsFavouritesVisible => SelectedTab == AppTab.Favourites;
@@ -77,7 +87,9 @@ public sealed partial class MainViewModel(AppStateStore appStateStore, StreamImp
 
     public string CurrentStreamSubtitle => CurrentStream?.OriginLabel ?? "在 Favourites 或 Streams 中点按一个媒体流开始播放";
 
-    public string PlaybackButtonText => IsPlaying ? "■ 停止" : "▶ 播放";
+    public string PlaybackButtonText => IsPlaying ? "停止" : "播放";
+
+    public string PlaybackIconGlyph => IsPlaying ? AppIcons.Stop : AppIcons.Play;
 
     public string SelectedFilterLabel => GetAvailableFilters().FirstOrDefault(option => option.Key == SelectedFilterKey)?.Label ?? "全部来源";
 

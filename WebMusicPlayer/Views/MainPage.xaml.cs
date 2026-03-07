@@ -1,4 +1,3 @@
-using AndroidX.Lifecycle;
 using CommunityToolkit.Maui.Core;
 using WebMusicPlayer.Models;
 using WebMusicPlayer.ViewModels;
@@ -90,21 +89,22 @@ public partial class MainPage : ContentPage
 
     private async Task AddManualStreamAsync()
     {
-        var name = await DisplayPromptAsync("手动添加", "请输入媒体流名称", initialValue: string.Empty);
-        if (name is null)
-        {
-            return;
-        }
-
-        var url = await DisplayPromptAsync("手动添加", "请输入 http/https 音频流或 m3u8 地址", keyboard: Keyboard.Url);
-        if (url is null)
+        var result = await EditorFormPage.ShowAsync(this, new EditorFormOptions(
+            Title: "添加媒体流",
+            Subtitle: "输入名称与网络地址，即可将新的 Stream 加入列表。",
+            PrimaryLabel: "媒体流名称",
+            PrimaryPlaceholder: "例如：Jazz Radio",
+            SecondaryLabel: "媒体流地址",
+            SecondaryPlaceholder: "https://example.com/live.m3u8",
+            SaveButtonText: "添加媒体流"));
+        if (result is null)
         {
             return;
         }
 
         try
         {
-            await _viewModel.AddManualStreamAsync(name, url);
+            await _viewModel.AddManualStreamAsync(result.PrimaryValue, result.SecondaryValue);
         }
         catch (Exception ex)
         {
@@ -137,21 +137,22 @@ public partial class MainPage : ContentPage
 
     private async Task AddSubscriptionAsync()
     {
-        var name = await DisplayPromptAsync("添加订阅", "请输入订阅名称", initialValue: string.Empty);
-        if (name is null)
-        {
-            return;
-        }
-
-        var url = await DisplayPromptAsync("添加订阅", "请输入订阅地址", keyboard: Keyboard.Url);
-        if (url is null)
+        var result = await EditorFormPage.ShowAsync(this, new EditorFormOptions(
+            Title: "添加订阅",
+            Subtitle: "订阅地址可以返回 xspf、m3u8 或 zip，应用会自动解析。",
+            PrimaryLabel: "订阅名称",
+            PrimaryPlaceholder: "例如：我的电台合集",
+            SecondaryLabel: "订阅地址",
+            SecondaryPlaceholder: "https://example.com/subscription",
+            SaveButtonText: "添加订阅"));
+        if (result is null)
         {
             return;
         }
 
         try
         {
-            await _viewModel.AddSubscriptionAsync(name, url);
+            await _viewModel.AddSubscriptionAsync(result.PrimaryValue, result.SecondaryValue);
         }
         catch (Exception ex)
         {

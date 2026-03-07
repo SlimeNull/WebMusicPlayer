@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:models="clr-namespace:WebMusicPlayer.Models"
              x:Class="WebMusicPlayer.Views.StreamsPage"
              x:Name="StreamsRoot">
 
@@ -16,9 +17,6 @@
                 <Label Text="{Binding StreamsSummaryText}"
                        FontSize="13"
                        Opacity="0.82" />
-                <Label Text="点按即可播放；左滑可喜欢或取消喜欢，右滑可删除。"
-                       FontSize="12"
-                       Opacity="0.65" />
             </VerticalStackLayout>
         </Border>
 
@@ -66,8 +64,7 @@
                                 <RoundRectangle CornerRadius="8"/>
                             </Border.StrokeShape>
                             <Grid RowDefinitions="Auto,Auto,Auto"
-                                  ColumnDefinitions="*,Auto"
-                                  RowSpacing="6">
+                                  ColumnDefinitions="*,Auto">
                                 <HorizontalStackLayout Spacing="8">
                                     <Label Text="{Binding Name}"
                                            FontFamily="OpenSansSemibold"
@@ -79,6 +76,7 @@
                                 </HorizontalStackLayout>
                                 <Label Grid.Column="1"
                                        Text="{Binding FavouriteGlyph}"
+                                        FontFamily="{x:Static models:AppIcons.FontFamily}"
                                        FontSize="20"
                                        TextColor="#F59E0B"
                                        VerticalTextAlignment="Center" />

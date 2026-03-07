@@ -17,53 +17,83 @@
             <Grid ColumnDefinitions="*,Auto,Auto"
                   ColumnSpacing="8">
                 <VerticalStackLayout Spacing="2">
-                    <Label Text="{Binding CurrentPageTitle}"
+                      <HorizontalStackLayout Spacing="8">
+                       <Label Text="{Binding CurrentPageIconGlyph}"
+                           FontFamily="{x:Static models:AppIcons.FontFamily}"
+                           FontSize="24"
+                           VerticalTextAlignment="Center" />
+                       <Label Text="{Binding CurrentPageTitle}"
                            FontFamily="OpenSansSemibold"
                            FontSize="26" />
+                      </HorizontalStackLayout>
                     <Label Text="WebMusicPlayer"
                            FontSize="12"
                            Opacity="0.68" />
                 </VerticalStackLayout>
 
-                <Button Grid.Column="1"
-                        Text="⌕"
-                        FontSize="18"
-                        WidthRequest="44"
-                        HeightRequest="44"
-                        Padding="0"
-                        CornerRadius="22"
-                        IsVisible="{Binding ShowStreamsToolbar}"
-                        Clicked="OnFilterClicked" />
+                <ImageButton Grid.Column="1"
+                             WidthRequest="44"
+                             HeightRequest="44"
+                             Padding="10"
+                             CornerRadius="22"
+                             BackgroundColor="{AppThemeBinding Light=#F2EFFF, Dark=#2B2440}"
+                             IsVisible="{Binding ShowStreamsToolbar}"
+                             Clicked="OnFilterClicked">
+                    <ImageButton.Source>
+                        <FontImageSource Glyph="{x:Static models:AppIcons.Filter}"
+                                         FontFamily="{x:Static models:AppIcons.FontFamily}"
+                                         Size="18"
+                                         Color="{AppThemeBinding Light=#242424, Dark=White}" />
+                    </ImageButton.Source>
+                </ImageButton>
 
-                <Button Grid.Column="2"
-                        Text="⋮"
-                        FontSize="20"
-                        WidthRequest="44"
-                        HeightRequest="44"
-                        Padding="0"
-                        CornerRadius="22"
-                        IsVisible="{Binding ShowStreamsToolbar}"
-                        Clicked="OnStreamsMenuClicked" />
+                <ImageButton Grid.Column="2"
+                             WidthRequest="44"
+                             HeightRequest="44"
+                             Padding="10"
+                             CornerRadius="22"
+                             BackgroundColor="{AppThemeBinding Light=#F2EFFF, Dark=#2B2440}"
+                             IsVisible="{Binding ShowStreamsToolbar}"
+                             Clicked="OnStreamsMenuClicked">
+                    <ImageButton.Source>
+                        <FontImageSource Glyph="{x:Static models:AppIcons.More}"
+                                         FontFamily="{x:Static models:AppIcons.FontFamily}"
+                                         Size="20"
+                                         Color="{AppThemeBinding Light=#242424, Dark=White}" />
+                    </ImageButton.Source>
+                </ImageButton>
 
-                <Button Grid.Column="1"
-                        Text="⟳"
-                        FontSize="18"
-                        WidthRequest="44"
-                        HeightRequest="44"
-                        Padding="0"
-                        CornerRadius="22"
-                        IsVisible="{Binding ShowSubscriptionsToolbar}"
-                        Clicked="OnUpdateSubscriptionsClicked" />
+                <ImageButton Grid.Column="1"
+                             WidthRequest="44"
+                             HeightRequest="44"
+                             Padding="10"
+                             CornerRadius="22"
+                             BackgroundColor="{AppThemeBinding Light=#F2EFFF, Dark=#2B2440}"
+                             IsVisible="{Binding ShowSubscriptionsToolbar}"
+                             Clicked="OnUpdateSubscriptionsClicked">
+                    <ImageButton.Source>
+                        <FontImageSource Glyph="{x:Static models:AppIcons.Refresh}"
+                                         FontFamily="{x:Static models:AppIcons.FontFamily}"
+                                         Size="18"
+                                         Color="{AppThemeBinding Light=#242424, Dark=White}" />
+                    </ImageButton.Source>
+                </ImageButton>
 
-                <Button Grid.Column="2"
-                        Text="⋮"
-                        FontSize="20"
-                        WidthRequest="44"
-                        HeightRequest="44"
-                        Padding="0"
-                        CornerRadius="22"
-                        IsVisible="{Binding ShowSubscriptionsToolbar}"
-                        Clicked="OnSubscriptionsMenuClicked" />
+                <ImageButton Grid.Column="2"
+                             WidthRequest="44"
+                             HeightRequest="44"
+                             Padding="10"
+                             CornerRadius="22"
+                             BackgroundColor="{AppThemeBinding Light=#F2EFFF, Dark=#2B2440}"
+                             IsVisible="{Binding ShowSubscriptionsToolbar}"
+                             Clicked="OnSubscriptionsMenuClicked">
+                    <ImageButton.Source>
+                        <FontImageSource Glyph="{x:Static models:AppIcons.More}"
+                                         FontFamily="{x:Static models:AppIcons.FontFamily}"
+                                         Size="20"
+                                         Color="{AppThemeBinding Light=#242424, Dark=White}" />
+                    </ImageButton.Source>
+                </ImageButton>
             </Grid>
         </Border>
 
@@ -71,12 +101,20 @@
               Padding="16,8,16,12"
               ColumnDefinitions="*,*,*"
               ColumnSpacing="10">
-            <Button Grid.Column="0"
-                    Text="★ Favs"
+            <Button x:Name="buttonFavourites" 
+                    Grid.Column="0"
+                    Text="Favourites"
                     Command="{Binding SelectTabCommand}"
                     CommandParameter="Favourites"
                     BackgroundColor="{AppThemeBinding Light=#EAE7FB, Dark=#262033}"
-                    TextColor="{AppThemeBinding Light=#242424, Dark=White}">
+                    TextColor="{AppThemeBinding Light=#242424, Dark=White}"
+                    ContentLayout="Left,8">
+                <Button.ImageSource>
+                    <FontImageSource x:Name="icon1" Glyph="{x:Static models:AppIcons.FavouriteFilled}"
+                                     FontFamily="{x:Static models:AppIcons.FontFamily}"
+                                     Size="16"
+                                     Color="{Binding Source={x:Reference buttonFavourites},Path=TextColor}" />
+                </Button.ImageSource>
                 <Button.Triggers>
                     <DataTrigger TargetType="Button"
                                  Binding="{Binding SelectedTab}"
@@ -87,12 +125,20 @@
                 </Button.Triggers>
             </Button>
 
-            <Button Grid.Column="1"
-                    Text="♫ Streams"
+            <Button x:Name="buttonStreams" 
+                    Grid.Column="1"
+                    Text="Streams"
                     Command="{Binding SelectTabCommand}"
                     CommandParameter="Streams"
                     BackgroundColor="{AppThemeBinding Light=#EAE7FB, Dark=#262033}"
-                    TextColor="{AppThemeBinding Light=#242424, Dark=White}">
+                    TextColor="{AppThemeBinding Light=#242424, Dark=White}"
+                    ContentLayout="Left,8">
+                <Button.ImageSource>
+                    <FontImageSource x:Name="icon2" Glyph="{x:Static models:AppIcons.Stream}"
+                                     FontFamily="{x:Static models:AppIcons.FontFamily}"
+                                     Size="16"
+                                     Color="{Binding Source={x:Reference buttonStreams},Path=TextColor}" />
+                </Button.ImageSource>
                 <Button.Triggers>
                     <DataTrigger TargetType="Button"
                                  Binding="{Binding SelectedTab}"
@@ -103,12 +149,19 @@
                 </Button.Triggers>
             </Button>
 
-            <Button Grid.Column="2"
-                    Text="☁ Subs"
+            <Button x:Name="buttonSubscriptions" Grid.Column="2"
+                    Text="Subscriptions"
                     Command="{Binding SelectTabCommand}"
                     CommandParameter="Subscriptions"
                     BackgroundColor="{AppThemeBinding Light=#EAE7FB, Dark=#262033}"
-                    TextColor="{AppThemeBinding Light=#242424, Dark=White}">
+                    TextColor="{AppThemeBinding Light=#242424, Dark=White}"
+                    ContentLayout="Left,8">
+                <Button.ImageSource>
+                    <FontImageSource x:Name="icon3" Glyph="{x:Static models:AppIcons.Subscription}"
+                                     FontFamily="{x:Static models:AppIcons.FontFamily}"
+                                     Size="16"
+                                     Color="{Binding Source={x:Reference buttonSubscriptions},Path=TextColor}" />
+                </Button.ImageSource>
                 <Button.Triggers>
                     <DataTrigger TargetType="Button"
                                  Binding="{Binding SelectedTab}"
@@ -155,7 +208,15 @@
                 <Button Grid.Column="1"
                         Text="{Binding PlaybackButtonText}"
                         Command="{Binding TogglePlaybackCommand}"
-                        VerticalOptions="Center" />
+                        ContentLayout="Left,8"
+                        VerticalOptions="Center">
+                    <Button.ImageSource>
+                        <FontImageSource Glyph="{Binding PlaybackIconGlyph}"
+                                         FontFamily="{x:Static models:AppIcons.FontFamily}"
+                                         Size="18"
+                                         Color="White" />
+                    </Button.ImageSource>
+                </Button>
             </Grid>
         </Border>
 

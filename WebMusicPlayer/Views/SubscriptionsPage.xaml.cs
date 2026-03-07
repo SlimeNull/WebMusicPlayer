@@ -23,21 +23,24 @@ public partial class SubscriptionsPage : ContentView
             return;
         }
 
-        var name = await page.DisplayPromptAsync("修改订阅", "请输入订阅名称", initialValue: subscription.Name);
-        if (name is null)
-        {
-            return;
-        }
-
-        var url = await page.DisplayPromptAsync("修改订阅", "请输入订阅地址", initialValue: subscription.Url, keyboard: Keyboard.Url);
-        if (url is null)
+        var result = await EditorFormPage.ShowAsync(page, new EditorFormOptions(
+            Title: "编辑订阅",
+            Subtitle: "修改订阅名称或地址后，会重新拉取该订阅的媒体流。",
+            PrimaryLabel: "订阅名称",
+            PrimaryPlaceholder: "请输入订阅名称",
+            SecondaryLabel: "订阅地址",
+            SecondaryPlaceholder: "https://example.com/subscription",
+            SaveButtonText: "保存修改",
+            PrimaryValue: subscription.Name,
+            SecondaryValue: subscription.Url));
+        if (result is null)
         {
             return;
         }
 
         try
         {
-            await viewModel.EditSubscriptionAsync(subscription, name, url);
+            await viewModel.EditSubscriptionAsync(subscription, result.PrimaryValue, result.SecondaryValue);
         }
         catch (Exception ex)
         {

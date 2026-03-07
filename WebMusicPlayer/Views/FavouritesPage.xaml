@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:models="clr-namespace:WebMusicPlayer.Models"
              x:Class="WebMusicPlayer.Views.FavouritesPage"
              x:Name="FavouritesRoot">
 
@@ -69,7 +70,8 @@
                                        FontFamily="OpenSansSemibold"
                                        FontSize="16" />
                                 <Label Grid.Column="1"
-                                       Text="★"
+                                       Text="{x:Static models:AppIcons.FavouriteFilled}"
+                                        FontFamily="{x:Static models:AppIcons.FontFamily}"
                                        FontSize="20"
                                        TextColor="#F59E0B"
                                        VerticalTextAlignment="Center" />
@@ -79,11 +81,6 @@
                                        FontSize="12"
                                        LineBreakMode="TailTruncation"
                                        Opacity="0.72" />
-                                <Label Grid.Row="2"
-                                       Grid.ColumnSpan="2"
-                                       Text="左滑或右滑可立即归档"
-                                       FontSize="12"
-                                       Opacity="0.6" />
 
                                 <Button Grid.RowSpan="3"
                                         Grid.ColumnSpan="2"

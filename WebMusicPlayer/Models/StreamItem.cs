@@ -29,7 +29,7 @@ public partial class StreamItem : ObservableObject
         ? "手动添加"
         : string.IsNullOrWhiteSpace(SubscriptionName) ? "订阅" : SubscriptionName;
 
-    public string FavouriteGlyph => IsFavourite ? "★" : "☆";
+    public string FavouriteGlyph => IsFavourite ? AppIcons.FavouriteFilled : AppIcons.Favourite;
 
     public string FavouriteActionText => IsFavourite ? "取消喜欢" : "标记喜欢";
 

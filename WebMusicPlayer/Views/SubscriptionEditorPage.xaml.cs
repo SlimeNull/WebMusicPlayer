@@ -1,0 +1,108 @@
+using WebMusicPlayer.Models;
+
+namespace WebMusicPlayer.Views;
+
+public partial class SubscriptionEditorPage : ContentPage
+{
+    private readonly TaskCompletionSource<SubscriptionEditorResult?> _resultSource = new();
+    private bool _isClosing;
+
+    public SubscriptionEditorPage(string title, string subtitle, string saveButtonText, SubscriptionEditorResult? initialValue)
+    {
+        InitializeComponent();
+        TitleLabel.Text = title;
+        SubtitleLabel.Text = subtitle;
+        SaveButton.Text = saveButtonText;
+
+        NameEntry.Text = initialValue?.Name ?? string.Empty;
+        UrlEntry.Text = initialValue?.Url ?? string.Empty;
+        DepthEntry.Text = (initialValue?.MaxPlaylistDepth ?? SubscriptionImportOptions.Default.MaxPlaylistDepth).ToString();
+        CountEntry.Text = (initialValue?.MaxStreamCount ?? SubscriptionImportOptions.Default.MaxStreamCount).ToString();
+    }
+
+    public static async Task<SubscriptionEditorResult?> ShowAsync(Page page, string title, string subtitle, string saveButtonText, SubscriptionEditorResult? initialValue = null)
+    {
+        var modal = new SubscriptionEditorPage(title, subtitle, saveButtonText, initialValue);
+        await page.Navigation.PushModalAsync(modal, false);
+        return await modal._resultSource.Task;
+    }
+
+    protected override void OnAppearing()
+    {
+        base.OnAppearing();
+        MainThread.BeginInvokeOnMainThread(async () =>
+        {
+            await Task.Delay(60);
+            NameEntry.Focus();
+        });
+    }
+
+    protected override bool OnBackButtonPressed()
+    {
+        _ = CloseAsync(null);
+        return true;
+    }
+
+    private void OnNameCompleted(object? sender, EventArgs e) => UrlEntry.Focus();
+
+    private void OnUrlCompleted(object? sender, EventArgs e) => DepthEntry.Focus();
+
+    private void OnDepthCompleted(object? sender, EventArgs e) => CountEntry.Focus();
+
+    private async void OnCancelClicked(object? sender, EventArgs e) => await CloseAsync(null);
+
+    private async void OnSaveClicked(object? sender, EventArgs e)
+    {
+        ErrorLabel.IsVisible = false;
+
+        var name = NameEntry.Text?.Trim() ?? string.Empty;
+        var url = UrlEntry.Text?.Trim() ?? string.Empty;
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            ShowError("请输入订阅名称。");
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(url))
+        {
+            ShowError("请输入订阅地址。");
+            return;
+        }
+
+        if (!int.TryParse(DepthEntry.Text?.Trim(), out var maxDepth) || maxDepth < 0 || maxDepth > 32)
+        {
+            ShowError("最大递归层数必须是 0 到 32 之间的整数。");
+            return;
+        }
+
+        if (!int.TryParse(CountEntry.Text?.Trim(), out var maxCount) || maxCount <= 0 || maxCount > 200000)
+        {
+            ShowError("最大媒体流数量必须是 1 到 200000 之间的整数。");
+            return;
+        }
+
+        await CloseAsync(new SubscriptionEditorResult(name, url, maxDepth, maxCount));
+    }
+
+    private void ShowError(string message)
+    {
+        ErrorLabel.Text = message;
+        ErrorLabel.IsVisible = true;
+    }
+
+    private async Task CloseAsync(SubscriptionEditorResult? result)
+    {
+        if (_isClosing)
+        {
+            return;
+        }
+
+        _isClosing = true;
+        _resultSource.TrySetResult(result);
+
+        if (Navigation.ModalStack.LastOrDefault() == this)
+        {
+            await Navigation.PopModalAsync(false);
+        }
+    }
+}

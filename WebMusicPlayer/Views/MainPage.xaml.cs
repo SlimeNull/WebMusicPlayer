@@ -140,14 +140,11 @@ public partial class MainPage : ContentPage
 
     private async Task AddSubscriptionAsync()
     {
-        var result = await EditorFormPage.ShowAsync(this, new EditorFormOptions(
-            Title: "添加订阅",
-            Subtitle: "订阅地址可以返回 xspf、m3u8 或 zip，应用会自动解析。",
-            PrimaryLabel: "订阅名称",
-            PrimaryPlaceholder: "例如：我的电台合集",
-            SecondaryLabel: "订阅地址",
-            SecondaryPlaceholder: "https://example.com/subscription",
-            SaveButtonText: "添加订阅"));
+        var result = await SubscriptionEditorPage.ShowAsync(
+            this,
+            "添加订阅",
+            "订阅地址可以返回 xspf、m3u8 或 zip，应用会自动解析。",
+            "添加订阅");
         if (result is null)
         {
             return;
@@ -155,7 +152,7 @@ public partial class MainPage : ContentPage
 
         try
         {
-            await _viewModel.AddSubscriptionAsync(result.PrimaryValue, result.SecondaryValue);
+            await _viewModel.AddSubscriptionAsync(result.Name, result.Url, result.MaxPlaylistDepth, result.MaxStreamCount);
         }
         catch (Exception ex)
         {

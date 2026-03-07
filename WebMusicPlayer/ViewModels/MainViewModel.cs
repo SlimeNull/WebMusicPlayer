@@ -193,14 +193,18 @@ public sealed partial class MainViewModel(AppStateStore appStateStore, StreamImp
         });
     }
 
-    public async Task AddSubscriptionAsync(string name, string address, CancellationToken cancellationToken = default)
+    public async Task AddSubscriptionAsync(string name, string address, int maxPlaylistDepth, int maxStreamCount, CancellationToken cancellationToken = default)
     {
         var normalizedUrl = ValidateHttpAddress(address);
         var normalizedName = NormalizeName(name, normalizedUrl);
+        var normalizedDepth = ValidateMaxPlaylistDepth(maxPlaylistDepth);
+        var normalizedStreamCount = ValidateMaxStreamCount(maxStreamCount);
         var existing = Subscriptions.FirstOrDefault(subscription => string.Equals(subscription.Url, normalizedUrl, StringComparison.OrdinalIgnoreCase));
         if (existing is not null)
         {
             existing.Name = normalizedName;
+            existing.MaxPlaylistDepth = normalizedDepth;
+            existing.MaxStreamCount = normalizedStreamCount;
             await RefreshSubscriptionAsync(existing, cancellationToken);
             return;
         }
@@ -208,7 +212,9 @@ public sealed partial class MainViewModel(AppStateStore appStateStore, StreamImp
         var subscriptionItem = new SubscriptionItem
         {
             Name = normalizedName,
-            Url = normalizedUrl
+            Url = normalizedUrl,
+            MaxPlaylistDepth = normalizedDepth,
+            MaxStreamCount = normalizedStreamCount
         };
 
         _state.Subscriptions.Add(subscriptionItem);
@@ -217,12 +223,12 @@ public sealed partial class MainViewModel(AppStateStore appStateStore, StreamImp
         await RefreshSubscriptionAsync(subscriptionItem, cancellationToken);
     }
 
-    public async Task EditSubscriptionAsync(SubscriptionItem subscription, string name, string address, CancellationToken cancellationToken = default)
+    public async Task EditSubscriptionAsync(SubscriptionItem subscription, string name, string address, int maxPlaylistDepth, int maxStreamCount, CancellationToken cancellationToken = default)
     {
         subscription.Name = NormalizeName(name, address);
         subscription.Url = ValidateHttpAddress(address);
-        RemoveStreamsFromSubscription(subscription.Id);
-        RefreshAllViews();
+        subscription.MaxPlaylistDepth = ValidateMaxPlaylistDepth(maxPlaylistDepth);
+        subscription.MaxStreamCount = ValidateMaxStreamCount(maxStreamCount);
         await SaveStateAsync();
         await RefreshSubscriptionAsync(subscription, cancellationToken);
     }
@@ -231,14 +237,40 @@ public sealed partial class MainViewModel(AppStateStore appStateStore, StreamImp
     {
         await RunBusyAsync("正在更新订阅…", async () =>
         {
-            foreach (var subscription in Subscriptions.ToList())
+            var subscriptions = Subscriptions.ToList();
+            var throttler = new SemaphoreSlim(Math.Clamp(subscriptions.Count, 1, 4));
+            var tasks = subscriptions.Select(async subscription =>
             {
-                cancellationToken.ThrowIfCancellationRequested();
-                await RefreshSubscriptionCoreAsync(subscription, cancellationToken);
+                await throttler.WaitAsync(cancellationToken);
+                try
+                {
+                    cancellationToken.ThrowIfCancellationRequested();
+                    return await FetchSubscriptionSnapshotAsync(subscription, cancellationToken);
+                }
+                catch (Exception ex)
+                {
+                    return new SubscriptionRefreshSnapshot(subscription, [], ex);
+                }
+                finally
+                {
+                    throttler.Release();
+                }
+            });
+
+            var snapshots = await Task.WhenAll(tasks);
+            foreach (var snapshot in snapshots.Where(static x => x.Error is null))
+            {
+                ApplySubscriptionSnapshot(snapshot);
             }
 
             RefreshAllViews();
             await SaveStateAsync();
+
+            var failures = snapshots.Where(static x => x.Error is not null).ToList();
+            if (failures.Count > 0)
+            {
+                throw new InvalidOperationException($"{failures.Count} 个订阅更新失败。首个错误: {failures[0].Error!.Message}");
+            }
         });
     }
 
@@ -356,18 +388,27 @@ public sealed partial class MainViewModel(AppStateStore appStateStore, StreamImp
     {
         await RunBusyAsync($"正在更新订阅 {subscription.Name}…", async () =>
         {
-            await RefreshSubscriptionCoreAsync(subscription, cancellationToken);
+            var snapshot = await FetchSubscriptionSnapshotAsync(subscription, cancellationToken);
+            ApplySubscriptionSnapshot(snapshot);
             RefreshAllViews();
             await SaveStateAsync();
         });
     }
 
-    private async Task RefreshSubscriptionCoreAsync(SubscriptionItem subscription, CancellationToken cancellationToken)
+    private async Task<SubscriptionRefreshSnapshot> FetchSubscriptionSnapshotAsync(SubscriptionItem subscription, CancellationToken cancellationToken)
     {
-        RemoveStreamsFromSubscription(subscription.Id);
-        var candidates = await _streamImportService.ParseFromAddressAsync(subscription.Url, cancellationToken);
-        MergeImportedStreams(candidates, StreamOriginKind.Subscription, subscription.Id, subscription.Name);
-        subscription.LastUpdatedUtc = DateTimeOffset.UtcNow;
+        var candidates = await Task.Run(
+            () => _streamImportService.ParseFromAddressAsync(subscription.Url, subscription.GetImportOptions(), cancellationToken),
+            cancellationToken);
+
+        return new SubscriptionRefreshSnapshot(subscription, candidates, null);
+    }
+
+    private void ApplySubscriptionSnapshot(SubscriptionRefreshSnapshot snapshot)
+    {
+        RemoveStreamsFromSubscription(snapshot.Subscription.Id);
+        MergeImportedStreams(snapshot.Candidates, StreamOriginKind.Subscription, snapshot.Subscription.Id, snapshot.Subscription.Name);
+        snapshot.Subscription.LastUpdatedUtc = DateTimeOffset.UtcNow;
     }
 
     private void MergeImportedStreams(
@@ -535,6 +576,26 @@ public sealed partial class MainViewModel(AppStateStore appStateStore, StreamImp
         return uri.AbsoluteUri;
     }
 
+    private static int ValidateMaxPlaylistDepth(int value)
+    {
+        if (value < 0 || value > 32)
+        {
+            throw new InvalidOperationException("最大递归层数必须在 0 到 32 之间。");
+        }
+
+        return value;
+    }
+
+    private static int ValidateMaxStreamCount(int value)
+    {
+        if (value <= 0 || value > 200000)
+        {
+            throw new InvalidOperationException("最大媒体流数量必须在 1 到 200000 之间。");
+        }
+
+        return value;
+    }
+
     private static string NormalizeName(string? name, string address)
     {
         if (!string.IsNullOrWhiteSpace(name))
@@ -555,4 +616,9 @@ public sealed partial class MainViewModel(AppStateStore appStateStore, StreamImp
 
         return "未命名媒体流";
     }
+
+    private sealed record SubscriptionRefreshSnapshot(
+        SubscriptionItem Subscription,
+        IReadOnlyList<ImportStreamCandidate> Candidates,
+        Exception? Error);
 }

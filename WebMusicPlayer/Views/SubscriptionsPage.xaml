@@ -17,9 +17,6 @@
                 <Label Text="{Binding SubscriptionsSummaryText}"
                        FontSize="13"
                        Opacity="0.82" />
-                <Label Text="点按一个订阅可以修改；右滑可删除。"
-                       FontSize="12"
-                       Opacity="0.65" />
             </VerticalStackLayout>
         </Border>
 
@@ -57,9 +54,9 @@
                             <Border.StrokeShape>
                                 <RoundRectangle CornerRadius="8"/>
                             </Border.StrokeShape>
-                            <Grid RowDefinitions="Auto,Auto,Auto"
-                                  ColumnDefinitions="*,Auto"
-                                  RowSpacing="6">
+                                <Grid RowDefinitions="Auto,Auto,Auto,Auto"
+                                      ColumnDefinitions="*,Auto"
+                                      RowSpacing="6">
                                 <Label Text="{Binding Name}"
                                        FontFamily="OpenSansSemibold"
                                        FontSize="16" />
@@ -76,11 +73,16 @@
                                        Opacity="0.72" />
                                 <Label Grid.Row="2"
                                        Grid.ColumnSpan="2"
+                                        Text="{Binding LimitsLabel}"
+                                        FontSize="12"
+                                        Opacity="0.72" />
+                                    <Label Grid.Row="3"
+                                        Grid.ColumnSpan="2"
                                        Text="{Binding LastUpdatedLabel}"
                                        FontSize="12"
                                        Opacity="0.58" />
 
-                                <Button Grid.RowSpan="3"
+                                    <Button Grid.RowSpan="4"
                                         Grid.ColumnSpan="2"
                                         Text=""
                                         BackgroundColor="Transparent"

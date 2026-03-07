@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.IO.Compression;
 using System.Text;
 using System.Xml.Linq;
@@ -8,28 +9,38 @@ namespace WebMusicPlayer.Services;
 public sealed class StreamImportService(HttpClient httpClient)
 {
     private static readonly string[] PlaylistExtensions = [".m3u8", ".m3u"];
+    private static readonly string[] DirectMediaContentTypePrefixes = ["audio/", "video/"];
+    private static readonly SubscriptionImportOptions ManualImportOptions = new(32, 200000, 4);
     private readonly HttpClient _httpClient = httpClient;
 
     public async Task<IReadOnlyList<ImportStreamCandidate>> ParseFromFileAsync(string fileName, Stream stream, CancellationToken cancellationToken = default)
     {
         using var memoryStream = new MemoryStream();
         await stream.CopyToAsync(memoryStream, cancellationToken);
-        return await ParsePayloadAsync(fileName, memoryStream.ToArray(), null, null, cancellationToken);
+        return await ParsePayloadAsync(fileName, memoryStream.ToArray(), null, null, ManualImportOptions, cancellationToken);
     }
 
-    public async Task<IReadOnlyList<ImportStreamCandidate>> ParseFromAddressAsync(string address, CancellationToken cancellationToken = default)
+    public Task<IReadOnlyList<ImportStreamCandidate>> ParseFromAddressAsync(string address, CancellationToken cancellationToken = default)
+        => ParseFromAddressAsync(address, SubscriptionImportOptions.Default, cancellationToken);
+
+    public async Task<IReadOnlyList<ImportStreamCandidate>> ParseFromAddressAsync(string address, SubscriptionImportOptions options, CancellationToken cancellationToken = default)
     {
         if (!Uri.TryCreate(address, UriKind.Absolute, out var uri) || (uri.Scheme != Uri.UriSchemeHttp && uri.Scheme != Uri.UriSchemeHttps))
         {
             throw new InvalidOperationException("地址必须是 http 或 https。");
         }
 
-        using var response = await _httpClient.GetAsync(uri, cancellationToken);
+        using var response = await _httpClient.GetAsync(uri, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
         response.EnsureSuccessStatusCode();
 
-        var bytes = await response.Content.ReadAsByteArrayAsync(cancellationToken);
         var contentType = response.Content.Headers.ContentType?.MediaType;
-        return await ParsePayloadAsync(uri.AbsolutePath, bytes, uri, contentType, cancellationToken);
+        if (ShouldTreatAsDirectMedia(uri.AbsoluteUri, contentType))
+        {
+            return [CreateCandidate(null, uri.AbsoluteUri, GetNameFromUrl(uri.AbsoluteUri))];
+        }
+
+        var bytes = await response.Content.ReadAsByteArrayAsync(cancellationToken);
+        return await ParsePayloadAsync(uri.AbsolutePath, bytes, uri, contentType, options, cancellationToken);
     }
 
     private async Task<IReadOnlyList<ImportStreamCandidate>> ParsePayloadAsync(
@@ -37,6 +48,7 @@ public sealed class StreamImportService(HttpClient httpClient)
         byte[] data,
         Uri? sourceUri,
         string? contentType,
+        SubscriptionImportOptions options,
         CancellationToken cancellationToken)
     {
         if (LooksLikeZip(data, fileNameOrHint, contentType))
@@ -54,7 +66,7 @@ public sealed class StreamImportService(HttpClient httpClient)
         if (LooksLikeM3u(text, fileNameOrHint, contentType))
         {
             var playlistName = Path.GetFileNameWithoutExtension(fileNameOrHint);
-            return await ParseM3uPlaylistAsync(text, sourceUri, playlistName, new HashSet<string>(StringComparer.OrdinalIgnoreCase), cancellationToken);
+            return await ParseM3uPlaylistAsync(text, sourceUri, playlistName, options, cancellationToken);
         }
 
         return ParsePlainText(text, Path.GetFileNameWithoutExtension(fileNameOrHint));
@@ -109,107 +121,153 @@ public sealed class StreamImportService(HttpClient httpClient)
         string playlistText,
         Uri? playlistUri,
         string? defaultName,
-        HashSet<string> visitedPlaylists,
+        SubscriptionImportOptions options,
         CancellationToken cancellationToken)
     {
-        var key = playlistUri?.AbsoluteUri ?? $"inline::{defaultName}::{playlistText.GetHashCode()}";
-        if (!visitedPlaylists.Add(key))
+        var workerCount = Math.Clamp(options.MaxConcurrentRequests, 1, 8);
+        var queue = new ConcurrentQueue<PlaylistWorkItem>();
+        var signal = new SemaphoreSlim(0);
+        var visitedPlaylists = new ConcurrentDictionary<string, byte>(StringComparer.OrdinalIgnoreCase);
+        var candidates = new ConcurrentDictionary<string, ImportStreamCandidate>(StringComparer.OrdinalIgnoreCase);
+        var sawNestedPlaylist = 0;
+        var pendingCount = 0;
+        var stopRequested = 0;
+
+        EnqueueWork(new PlaylistWorkItem(playlistUri, defaultName, 0, playlistText));
+
+        var workers = Enumerable.Range(0, workerCount).Select(_ => ProcessQueueAsync()).ToArray();
+        await Task.WhenAll(workers);
+
+        if (candidates.IsEmpty && Volatile.Read(ref sawNestedPlaylist) == 0 && playlistUri is not null)
         {
-            return [];
+            return [CreateCandidate(defaultName, playlistUri.AbsoluteUri, defaultName)];
         }
 
-        var results = new List<ImportStreamCandidate>();
-        var lines = playlistText
-            .Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        return candidates.Values.ToList();
 
-        string? previousDirective = null;
-        var sawNestedPlaylist = false;
-        foreach (var rawLine in lines)
+        void EnqueueWork(PlaylistWorkItem workItem)
         {
-            var line = rawLine.Trim();
-            if (string.IsNullOrWhiteSpace(line))
+            if (Volatile.Read(ref stopRequested) == 1)
             {
-                continue;
+                return;
             }
 
-            if (line.StartsWith("#EXT-X-MEDIA", StringComparison.OrdinalIgnoreCase))
+            var key = workItem.PlaylistUri?.AbsoluteUri ?? $"inline::{workItem.DefaultName}::{workItem.Depth}::{workItem.InlineText?.GetHashCode()}";
+            if (!visitedPlaylists.TryAdd(key, 0))
             {
-                var embeddedUri = ExtractQuotedAttribute(line, "URI");
-                if (!string.IsNullOrWhiteSpace(embeddedUri))
+                return;
+            }
+
+            queue.Enqueue(workItem);
+            Interlocked.Increment(ref pendingCount);
+            signal.Release();
+        }
+
+        async Task ProcessQueueAsync()
+        {
+            while (true)
+            {
+                await signal.WaitAsync(cancellationToken);
+
+                if (!queue.TryDequeue(out var workItem))
                 {
-                    var nestedResults = await ResolvePlaylistReferenceAsync(embeddedUri, playlistUri, defaultName, visitedPlaylists, cancellationToken);
-                    sawNestedPlaylist |= nestedResults.Count > 0;
-                    results.AddRange(nestedResults);
+                    if (Volatile.Read(ref pendingCount) == 0)
+                    {
+                        break;
+                    }
+
+                    continue;
                 }
 
-                previousDirective = line;
-                continue;
+                try
+                {
+                    if (Volatile.Read(ref stopRequested) == 0)
+                    {
+                        await ProcessWorkItemAsync(workItem);
+                    }
+                }
+                finally
+                {
+                    if (Interlocked.Decrement(ref pendingCount) == 0)
+                    {
+                        signal.Release(workerCount);
+                    }
+                }
             }
-
-            if (line.StartsWith('#'))
-            {
-                previousDirective = line;
-                continue;
-            }
-
-            var resolvedUri = ResolveUri(playlistUri, line);
-            if (string.IsNullOrWhiteSpace(resolvedUri))
-            {
-                previousDirective = null;
-                continue;
-            }
-
-            var isVariantReference = previousDirective?.StartsWith("#EXT-X-STREAM-INF", StringComparison.OrdinalIgnoreCase) == true;
-            var isPlaylistReference = isVariantReference || PlaylistExtensions.Any(extension => resolvedUri.EndsWith(extension, StringComparison.OrdinalIgnoreCase));
-            if (isPlaylistReference)
-            {
-                var nestedResults = await ResolvePlaylistReferenceAsync(resolvedUri, playlistUri, defaultName, visitedPlaylists, cancellationToken);
-                sawNestedPlaylist |= nestedResults.Count > 0;
-                results.AddRange(nestedResults);
-            }
-            else if (IsHttpAddress(resolvedUri))
-            {
-                results.Add(CreateCandidate(null, resolvedUri, defaultName));
-            }
-
-            previousDirective = null;
         }
 
-        if (!results.Any() && !sawNestedPlaylist && playlistUri is not null)
+        async Task ProcessWorkItemAsync(PlaylistWorkItem workItem)
         {
-            results.Add(CreateCandidate(defaultName, playlistUri.AbsoluteUri, defaultName));
+            var text = workItem.InlineText;
+            var playlistUriForText = workItem.PlaylistUri;
+
+            if (text is null)
+            {
+                if (workItem.PlaylistUri is null || Volatile.Read(ref stopRequested) == 1)
+                {
+                    return;
+                }
+
+                using var response = await _httpClient.GetAsync(workItem.PlaylistUri, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
+                response.EnsureSuccessStatusCode();
+                var contentType = response.Content.Headers.ContentType?.MediaType;
+
+                if (ShouldTreatAsDirectMedia(workItem.PlaylistUri.AbsoluteUri, contentType))
+                {
+                    AddCandidate(CreateCandidate(null, workItem.PlaylistUri.AbsoluteUri, workItem.DefaultName));
+                    return;
+                }
+
+                var bytes = await response.Content.ReadAsByteArrayAsync(cancellationToken);
+                text = DecodeText(bytes);
+                playlistUriForText = workItem.PlaylistUri;
+
+                if (!LooksLikeM3u(text, workItem.PlaylistUri.AbsolutePath, contentType))
+                {
+                    foreach (var candidate in ParsePlainText(text, workItem.DefaultName))
+                    {
+                        AddCandidate(candidate);
+                    }
+
+                    return;
+                }
+            }
+
+            foreach (var entry in EnumeratePlaylistEntries(text!, playlistUriForText))
+            {
+                if (Volatile.Read(ref stopRequested) == 1)
+                {
+                    return;
+                }
+
+                if (entry.Kind == PlaylistEntryKind.Media)
+                {
+                    AddCandidate(CreateCandidate(null, entry.Url, workItem.DefaultName));
+                    continue;
+                }
+
+                Interlocked.Exchange(ref sawNestedPlaylist, 1);
+                if (workItem.Depth >= options.MaxPlaylistDepth)
+                {
+                    continue;
+                }
+
+                EnqueueWork(new PlaylistWorkItem(new Uri(entry.Url), workItem.DefaultName, workItem.Depth + 1, null));
+            }
         }
 
-        return DistinctCandidates(results);
-    }
-
-    private async Task<IReadOnlyList<ImportStreamCandidate>> ResolvePlaylistReferenceAsync(
-        string reference,
-        Uri? baseUri,
-        string? defaultName,
-        HashSet<string> visitedPlaylists,
-        CancellationToken cancellationToken)
-    {
-        var resolvedUri = ResolveUri(baseUri, reference);
-        if (!IsHttpAddress(resolvedUri))
+        void AddCandidate(ImportStreamCandidate candidate)
         {
-            return [];
+            if (Volatile.Read(ref stopRequested) == 1)
+            {
+                return;
+            }
+
+            if (candidates.TryAdd(candidate.Url, candidate) && candidates.Count >= options.MaxStreamCount)
+            {
+                Interlocked.Exchange(ref stopRequested, 1);
+            }
         }
-
-        var resolvedPlaylistUri = resolvedUri!;
-
-        using var response = await _httpClient.GetAsync(resolvedPlaylistUri, cancellationToken);
-        response.EnsureSuccessStatusCode();
-
-        var contentBytes = await response.Content.ReadAsByteArrayAsync(cancellationToken);
-        var contentType = response.Content.Headers.ContentType?.MediaType;
-        var contentText = DecodeText(contentBytes);
-        if (!LooksLikeM3u(contentText, resolvedPlaylistUri, contentType))
-        {
-            return [CreateCandidate(defaultName, resolvedPlaylistUri, defaultName)];
-        }
-
-        return await ParseM3uPlaylistAsync(contentText, new Uri(resolvedPlaylistUri), defaultName, visitedPlaylists, cancellationToken);
     }
 
     private static IReadOnlyList<ImportStreamCandidate> ParsePlainText(string text, string? defaultName)
@@ -244,8 +302,52 @@ public sealed class StreamImportService(HttpClient httpClient)
         return PlaylistExtensions.Any(extension => fileNameOrHint.EndsWith(extension, StringComparison.OrdinalIgnoreCase))
             || string.Equals(contentType, "application/vnd.apple.mpegurl", StringComparison.OrdinalIgnoreCase)
             || string.Equals(contentType, "application/x-mpegURL", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(contentType, "audio/mpegurl", StringComparison.OrdinalIgnoreCase)
             || text.Contains("#EXTM3U", StringComparison.OrdinalIgnoreCase)
             || text.Contains("#EXT-X-STREAM-INF", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static bool ShouldTreatAsDirectMedia(string url, string? contentType)
+    {
+        if (!string.IsNullOrWhiteSpace(contentType))
+        {
+            if (DirectMediaContentTypePrefixes.Any(prefix => contentType.StartsWith(prefix, StringComparison.OrdinalIgnoreCase)))
+            {
+                return true;
+            }
+
+            if (IsStructuredContentType(contentType))
+            {
+                return false;
+            }
+
+            if (string.Equals(contentType, "application/octet-stream", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(contentType, "application/ogg", StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+        }
+
+        var extension = Path.GetExtension(url);
+        return string.Equals(extension, ".aac", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(extension, ".mp3", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(extension, ".ogg", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(extension, ".wav", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(extension, ".flac", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(extension, ".m4a", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static bool IsStructuredContentType(string? contentType)
+    {
+        return string.Equals(contentType, "application/vnd.apple.mpegurl", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(contentType, "application/x-mpegURL", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(contentType, "audio/mpegurl", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(contentType, "application/xspf+xml", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(contentType, "application/zip", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(contentType, "application/x-zip-compressed", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(contentType, "text/plain", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(contentType, "application/xml", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(contentType, "text/xml", StringComparison.OrdinalIgnoreCase);
     }
 
     private static string DecodeText(byte[] bytes)
@@ -337,5 +439,63 @@ public sealed class StreamImportService(HttpClient httpClient)
             .GroupBy(static candidate => candidate.Url, StringComparer.OrdinalIgnoreCase)
             .Select(static group => group.First())
             .ToList();
+    }
+
+    private static IEnumerable<PlaylistEntry> EnumeratePlaylistEntries(string playlistText, Uri? playlistUri)
+    {
+        var lines = playlistText
+            .Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
+        string? previousDirective = null;
+        foreach (var rawLine in lines)
+        {
+            var line = rawLine.Trim();
+            if (string.IsNullOrWhiteSpace(line))
+            {
+                continue;
+            }
+
+            if (line.StartsWith("#EXT-X-MEDIA", StringComparison.OrdinalIgnoreCase))
+            {
+                var embeddedUri = ExtractQuotedAttribute(line, "URI");
+                var resolvedEmbeddedUri = ResolveUri(playlistUri, embeddedUri ?? string.Empty);
+                if (IsHttpAddress(resolvedEmbeddedUri))
+                {
+                    yield return new PlaylistEntry(PlaylistEntryKind.Playlist, resolvedEmbeddedUri!);
+                }
+
+                previousDirective = line;
+                continue;
+            }
+
+            if (line.StartsWith('#'))
+            {
+                previousDirective = line;
+                continue;
+            }
+
+            var resolvedUri = ResolveUri(playlistUri, line);
+            if (string.IsNullOrWhiteSpace(resolvedUri))
+            {
+                previousDirective = null;
+                continue;
+            }
+
+            var isVariantReference = previousDirective?.StartsWith("#EXT-X-STREAM-INF", StringComparison.OrdinalIgnoreCase) == true;
+            var isPlaylistReference = isVariantReference || PlaylistExtensions.Any(extension => resolvedUri.EndsWith(extension, StringComparison.OrdinalIgnoreCase));
+            yield return new PlaylistEntry(isPlaylistReference ? PlaylistEntryKind.Playlist : PlaylistEntryKind.Media, resolvedUri);
+
+            previousDirective = null;
+        }
+    }
+
+    private sealed record PlaylistWorkItem(Uri? PlaylistUri, string? DefaultName, int Depth, string? InlineText);
+
+    private sealed record PlaylistEntry(PlaylistEntryKind Kind, string Url);
+
+    private enum PlaylistEntryKind
+    {
+        Playlist,
+        Media
     }
 }

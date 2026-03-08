@@ -1,5 +1,5 @@
-using System.Collections.Concurrent;
 using System.IO.Compression;
+using System.Net;
 using System.Text.RegularExpressions;
 using System.Text;
 using System.Xml.Linq;
@@ -14,7 +14,7 @@ public sealed class StreamImportService(HttpClient httpClient)
     private static readonly string[] DirectMediaContentTypePrefixes = ["audio/", "video/"];
     private static readonly string[] InvalidStreamNames = ["playlist", "stream", "listen", "live", "audio", "default", "mount", "radio", "hls", "aac", "mp3", "ogg", "opus"];
     private static readonly Regex BitrateOnlyNameRegex = new(@"^\d+\s*(kbps|k|mbps)(\s+[a-z0-9]+)?$", RegexOptions.IgnoreCase | RegexOptions.Compiled);
-    private static readonly SubscriptionImportOptions ManualImportOptions = new(32, 200000, 4);
+    private static readonly SubscriptionImportOptions ManualImportOptions = new(200000);
     private readonly HttpClient _httpClient = httpClient;
 
     public async Task<IReadOnlyList<ImportStreamCandidate>> ResolveInvalidStreamNamesAsync(
@@ -152,7 +152,7 @@ public sealed class StreamImportService(HttpClient httpClient)
         if (LooksLikeM3u(text, fileNameOrHint, contentType))
         {
             var playlistName = Path.GetFileNameWithoutExtension(fileNameOrHint);
-            return await ParseM3uPlaylistAsync(text, sourceUri, playlistName, options, progress, shouldAbort, cancellationToken);
+            return ParseM3uPlaylist(text, sourceUri, playlistName, options, progress, shouldAbort);
         }
 
         var directCandidates = ParsePlainText(text, Path.GetFileNameWithoutExtension(fileNameOrHint));
@@ -205,177 +205,77 @@ public sealed class StreamImportService(HttpClient httpClient)
         return DistinctCandidates(streams);
     }
 
-    private async Task<IReadOnlyList<ImportStreamCandidate>> ParseM3uPlaylistAsync(
+    private static IReadOnlyList<ImportStreamCandidate> ParseM3uPlaylist(
         string playlistText,
         Uri? playlistUri,
         string? defaultName,
         SubscriptionImportOptions options,
         IProgress<int>? progress,
-        Func<bool>? shouldAbort,
-        CancellationToken cancellationToken)
+        Func<bool>? shouldAbort)
     {
-        var workerCount = Math.Clamp(options.MaxConcurrentRequests, 1, 8);
-        var queue = new ConcurrentQueue<PlaylistWorkItem>();
-        var signal = new SemaphoreSlim(0);
-        var visitedPlaylists = new ConcurrentDictionary<string, byte>(StringComparer.OrdinalIgnoreCase);
-        var candidates = new ConcurrentDictionary<string, ImportStreamCandidate>(StringComparer.OrdinalIgnoreCase);
-        var sawNestedPlaylist = 0;
-        var pendingCount = 0;
-        var stopRequested = 0;
+        var candidates = new Dictionary<string, ImportStreamCandidate>(StringComparer.OrdinalIgnoreCase);
+        var playlistName = TryExtractPlaylistName(playlistText) ?? defaultName;
+        M3uEntryMetadata? pendingEntry = null;
 
-        EnqueueWork(new PlaylistWorkItem(playlistUri, defaultName, 0, playlistText));
-
-        var workers = Enumerable.Range(0, workerCount).Select(_ => ProcessQueueAsync()).ToArray();
-        await Task.WhenAll(workers);
-
-        if (candidates.IsEmpty && Volatile.Read(ref sawNestedPlaylist) == 0 && playlistUri is not null)
+        if (LooksLikeHlsMasterPlaylist(playlistText) && playlistUri is not null)
         {
-            return [CreateCandidate(defaultName, playlistUri.AbsoluteUri, defaultName)];
+            progress?.Report(1);
+            return [CreateCandidate(defaultName, playlistUri.AbsoluteUri, playlistName)];
+        }
+
+        foreach (var rawLine in playlistText.Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+        {
+            if (shouldAbort?.Invoke() == true || candidates.Count >= options.MaxStreamCount)
+            {
+                break;
+            }
+
+            var line = rawLine.Trim();
+            if (string.IsNullOrWhiteSpace(line))
+            {
+                continue;
+            }
+
+            if (line.StartsWith("#EXTINF", StringComparison.OrdinalIgnoreCase))
+            {
+                pendingEntry = ParseM3uEntryMetadata(line, playlistUri);
+                continue;
+            }
+
+            if (line.StartsWith('#'))
+            {
+                continue;
+            }
+
+            var resolvedUrl = ResolveUri(playlistUri, line);
+            if (!IsHttpAddress(resolvedUrl))
+            {
+                pendingEntry = null;
+                continue;
+            }
+
+            var candidate = CreateCandidate(
+                pendingEntry?.Title,
+                resolvedUrl!,
+                playlistName,
+                pendingEntry?.ArtworkUrl);
+
+            if (!candidates.ContainsKey(candidate.Url))
+            {
+                candidates[candidate.Url] = candidate;
+                progress?.Report(candidates.Count);
+            }
+
+            pendingEntry = null;
+        }
+
+        if (candidates.Count == 0 && playlistUri is not null)
+        {
+            progress?.Report(1);
+            return [CreateCandidate(defaultName, playlistUri.AbsoluteUri, playlistName)];
         }
 
         return candidates.Values.ToList();
-
-        void EnqueueWork(PlaylistWorkItem workItem)
-        {
-            if (ShouldStop())
-            {
-                return;
-            }
-
-            var key = workItem.PlaylistUri?.AbsoluteUri ?? $"inline::{workItem.DefaultName}::{workItem.Depth}::{workItem.InlineText?.GetHashCode()}";
-            if (!visitedPlaylists.TryAdd(key, 0))
-            {
-                return;
-            }
-
-            queue.Enqueue(workItem);
-            Interlocked.Increment(ref pendingCount);
-            signal.Release();
-        }
-
-        async Task ProcessQueueAsync()
-        {
-            while (true)
-            {
-                await signal.WaitAsync(cancellationToken);
-
-                if (!queue.TryDequeue(out var workItem))
-                {
-                    if (Volatile.Read(ref pendingCount) == 0)
-                    {
-                        break;
-                    }
-
-                    continue;
-                }
-
-                try
-                {
-                    if (!ShouldStop())
-                    {
-                        await ProcessWorkItemAsync(workItem);
-                    }
-                }
-                finally
-                {
-                    if (Interlocked.Decrement(ref pendingCount) == 0)
-                    {
-                        signal.Release(workerCount);
-                    }
-                }
-            }
-        }
-
-        async Task ProcessWorkItemAsync(PlaylistWorkItem workItem)
-        {
-            var text = workItem.InlineText;
-            var playlistUriForText = workItem.PlaylistUri;
-
-            if (text is null)
-            {
-                if (workItem.PlaylistUri is null || ShouldStop())
-                {
-                    return;
-                }
-
-                using var response = await _httpClient.GetAsync(workItem.PlaylistUri, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
-                response.EnsureSuccessStatusCode();
-                var contentType = response.Content.Headers.ContentType?.MediaType;
-
-                if (ShouldTreatAsDirectMedia(workItem.PlaylistUri.AbsoluteUri, contentType))
-                {
-                    AddCandidate(CreateCandidate(null, workItem.PlaylistUri.AbsoluteUri, workItem.DefaultName));
-                    return;
-                }
-
-                var bytes = await response.Content.ReadAsByteArrayAsync(cancellationToken);
-                text = DecodeText(bytes);
-                playlistUriForText = workItem.PlaylistUri;
-
-                if (!LooksLikeM3u(text, workItem.PlaylistUri.AbsolutePath, contentType))
-                {
-                    foreach (var candidate in ParsePlainText(text, workItem.DefaultName))
-                    {
-                        AddCandidate(candidate);
-                    }
-
-                    return;
-                }
-            }
-
-            foreach (var entry in EnumeratePlaylistEntries(text!, playlistUriForText))
-            {
-                if (ShouldStop())
-                {
-                    return;
-                }
-
-                if (entry.Kind == PlaylistEntryKind.Media)
-                {
-                    AddCandidate(CreateCandidate(null, entry.Url, workItem.DefaultName));
-                    continue;
-                }
-
-                Interlocked.Exchange(ref sawNestedPlaylist, 1);
-                if (workItem.Depth >= options.MaxPlaylistDepth)
-                {
-                    continue;
-                }
-
-                EnqueueWork(new PlaylistWorkItem(new Uri(entry.Url), workItem.DefaultName, workItem.Depth + 1, null));
-            }
-        }
-
-        void AddCandidate(ImportStreamCandidate candidate)
-        {
-            if (ShouldStop())
-            {
-                return;
-            }
-
-            if (candidates.TryAdd(candidate.Url, candidate) && candidates.Count >= options.MaxStreamCount)
-            {
-                Interlocked.Exchange(ref stopRequested, 1);
-            }
-
-            progress?.Report(candidates.Count);
-        }
-
-        bool ShouldStop()
-        {
-            if (Volatile.Read(ref stopRequested) == 1)
-            {
-                return true;
-            }
-
-            if (shouldAbort?.Invoke() == true)
-            {
-                Interlocked.Exchange(ref stopRequested, 1);
-                return true;
-            }
-
-            return false;
-        }
     }
 
     private static IReadOnlyList<ImportStreamCandidate> ParsePlainText(string text, string? defaultName)
@@ -488,15 +388,15 @@ public sealed class StreamImportService(HttpClient httpClient)
         return null;
     }
 
-    private static ImportStreamCandidate CreateCandidate(string? preferredName, string url, string? fallbackName)
+    private static ImportStreamCandidate CreateCandidate(string? preferredName, string url, string? fallbackName, string? artworkUrl = null)
     {
         var normalizedName = !string.IsNullOrWhiteSpace(preferredName)
-            ? preferredName.Trim()
+            ? WebUtility.HtmlDecode(preferredName.Trim())
             : !string.IsNullOrWhiteSpace(fallbackName)
-                ? fallbackName.Trim()
+                ? WebUtility.HtmlDecode(fallbackName.Trim())
                 : GetNameFromUrl(url);
 
-        return new ImportStreamCandidate(normalizedName, url.Trim());
+        return new ImportStreamCandidate(normalizedName, url.Trim(), string.IsNullOrWhiteSpace(artworkUrl) ? null : artworkUrl.Trim());
     }
 
     private static string GetNameFromUrl(string url)
@@ -575,6 +475,65 @@ public sealed class StreamImportService(HttpClient httpClient)
         return directive[start..end];
     }
 
+    private static string? TryExtractPlaylistName(string playlistText)
+    {
+        foreach (var rawLine in playlistText.Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+        {
+            if (!rawLine.StartsWith("#PLAYLIST:", StringComparison.OrdinalIgnoreCase))
+            {
+                continue;
+            }
+
+            var title = rawLine["#PLAYLIST:".Length..].Trim();
+            if (!string.IsNullOrWhiteSpace(title))
+            {
+                return WebUtility.HtmlDecode(title);
+            }
+        }
+
+        return null;
+    }
+
+    private static bool LooksLikeHlsMasterPlaylist(string playlistText)
+    {
+        return playlistText.Contains("#EXT-X-STREAM-INF", StringComparison.OrdinalIgnoreCase)
+            && !playlistText.Contains("#EXTINF:", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static M3uEntryMetadata ParseM3uEntryMetadata(string directive, Uri? playlistUri)
+    {
+        var colonIndex = directive.IndexOf(':');
+        var payload = colonIndex >= 0 ? directive[(colonIndex + 1)..] : directive;
+        var commaIndex = FindUnquotedCommaIndex(payload);
+        var title = commaIndex >= 0 ? payload[(commaIndex + 1)..].Trim() : string.Empty;
+        var artworkReference = ExtractQuotedAttribute(directive, "tvg-logo");
+        var artworkUrl = ResolveUri(playlistUri, artworkReference ?? string.Empty);
+
+        return new M3uEntryMetadata(
+            string.IsNullOrWhiteSpace(title) ? null : WebUtility.HtmlDecode(title),
+            IsHttpAddress(artworkUrl) ? artworkUrl : null);
+    }
+
+    private static int FindUnquotedCommaIndex(string text)
+    {
+        var insideQuotes = false;
+        for (var index = 0; index < text.Length; index++)
+        {
+            if (text[index] == '"')
+            {
+                insideQuotes = !insideQuotes;
+                continue;
+            }
+
+            if (text[index] == ',' && !insideQuotes)
+            {
+                return index;
+            }
+        }
+
+        return -1;
+    }
+
     private static bool IsHttpAddress(string? address)
     {
         return Uri.TryCreate(address, UriKind.Absolute, out var uri)
@@ -586,65 +545,12 @@ public sealed class StreamImportService(HttpClient httpClient)
         return candidates
             .Where(static candidate => IsHttpAddress(candidate.Url))
             .GroupBy(static candidate => candidate.Url, StringComparer.OrdinalIgnoreCase)
-            .Select(static group => group.First())
+            .Select(static group => group
+                .OrderByDescending(static candidate => !string.IsNullOrWhiteSpace(candidate.ArtworkUrl))
+                .ThenByDescending(static candidate => !string.IsNullOrWhiteSpace(candidate.Name))
+                .First())
             .ToList();
     }
 
-    private static IEnumerable<PlaylistEntry> EnumeratePlaylistEntries(string playlistText, Uri? playlistUri)
-    {
-        var lines = playlistText
-            .Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-
-        string? previousDirective = null;
-        foreach (var rawLine in lines)
-        {
-            var line = rawLine.Trim();
-            if (string.IsNullOrWhiteSpace(line))
-            {
-                continue;
-            }
-
-            if (line.StartsWith("#EXT-X-MEDIA", StringComparison.OrdinalIgnoreCase))
-            {
-                var embeddedUri = ExtractQuotedAttribute(line, "URI");
-                var resolvedEmbeddedUri = ResolveUri(playlistUri, embeddedUri ?? string.Empty);
-                if (IsHttpAddress(resolvedEmbeddedUri))
-                {
-                    yield return new PlaylistEntry(PlaylistEntryKind.Playlist, resolvedEmbeddedUri!);
-                }
-
-                previousDirective = line;
-                continue;
-            }
-
-            if (line.StartsWith('#'))
-            {
-                previousDirective = line;
-                continue;
-            }
-
-            var resolvedUri = ResolveUri(playlistUri, line);
-            if (string.IsNullOrWhiteSpace(resolvedUri))
-            {
-                previousDirective = null;
-                continue;
-            }
-
-            var isVariantReference = previousDirective?.StartsWith("#EXT-X-STREAM-INF", StringComparison.OrdinalIgnoreCase) == true;
-            var isPlaylistReference = isVariantReference || PlaylistExtensions.Any(extension => resolvedUri.EndsWith(extension, StringComparison.OrdinalIgnoreCase));
-            yield return new PlaylistEntry(isPlaylistReference ? PlaylistEntryKind.Playlist : PlaylistEntryKind.Media, resolvedUri);
-
-            previousDirective = null;
-        }
-    }
-
-    private sealed record PlaylistWorkItem(Uri? PlaylistUri, string? DefaultName, int Depth, string? InlineText);
-
-    private sealed record PlaylistEntry(PlaylistEntryKind Kind, string Url);
-
-    private enum PlaylistEntryKind
-    {
-        Playlist,
-        Media
-    }
+    private sealed record M3uEntryMetadata(string? Title, string? ArtworkUrl);
 }

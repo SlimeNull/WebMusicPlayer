@@ -20,6 +20,10 @@ public partial class EditorFormPage : ContentPage
         SecondaryLabel.Text = options.SecondaryLabel;
         SecondaryEntry.Placeholder = options.SecondaryPlaceholder;
         SecondaryEntry.Text = options.SecondaryValue;
+        TertiarySection.IsVisible = !string.IsNullOrWhiteSpace(options.TertiaryLabel);
+        TertiaryLabel.Text = options.TertiaryLabel ?? string.Empty;
+        TertiaryEntry.Placeholder = options.TertiaryPlaceholder ?? string.Empty;
+        TertiaryEntry.Text = options.TertiaryValue;
         SaveButton.Text = options.SaveButtonText;
     }
 
@@ -70,12 +74,23 @@ public partial class EditorFormPage : ContentPage
             return;
         }
 
-        await CloseAsync(new EditorFormResult(primary, secondary));
+        await CloseAsync(new EditorFormResult(primary, secondary, TertiaryEntry.Text?.Trim() ?? string.Empty));
     }
 
     private void OnPrimaryCompleted(object? sender, EventArgs e)
     {
         SecondaryEntry.Focus();
+    }
+
+    private void OnSecondaryCompleted(object? sender, EventArgs e)
+    {
+        if (TertiarySection.IsVisible)
+        {
+            TertiaryEntry.Focus();
+            return;
+        }
+
+        OnSaveClicked(sender, e);
     }
 
     private void ShowError(string message)

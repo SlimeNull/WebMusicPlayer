@@ -23,7 +23,7 @@
                         Opacity="0.24" />
             </Border.Shadow>
 
-            <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto"
+            <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto"
                   RowSpacing="12">
                 <Grid ColumnDefinitions="*,Auto">
                     <VerticalStackLayout Spacing="4">
@@ -70,18 +70,40 @@
                         <Entry x:Name="SecondaryEntry"
                                ClearButtonVisibility="WhileEditing"
                                Keyboard="Url"
-                               ReturnType="Done"
-                               Completed="OnSaveClicked" />
+                               ReturnType="Next"
+                               Completed="OnSecondaryCompleted" />
                     </Border>
                 </VerticalStackLayout>
 
-                <Label Grid.Row="3"
+                      <VerticalStackLayout x:Name="TertiarySection"
+                                  Grid.Row="3"
+                                  Spacing="6"
+                                  IsVisible="False">
+                          <Label x:Name="TertiaryLabel"
+                              FontFamily="OpenSansSemibold"
+                              FontSize="13" />
+                          <Border StrokeThickness="1"
+                            Stroke="{AppThemeBinding Light=#DDD7FA, Dark=#3B3453}"
+                            BackgroundColor="{AppThemeBinding Light=#FCFBFF, Dark=#23232D}"
+                            Padding="8,4">
+                           <Border.StrokeShape>
+                            <RoundRectangle CornerRadius="8" />
+                           </Border.StrokeShape>
+                           <Entry x:Name="TertiaryEntry"
+                               ClearButtonVisibility="WhileEditing"
+                               Keyboard="Url"
+                               ReturnType="Done"
+                               Completed="OnSaveClicked" />
+                          </Border>
+                      </VerticalStackLayout>
+
+                      <Label Grid.Row="4"
                        x:Name="ErrorLabel"
                        TextColor="#DC2626"
                        FontSize="12"
                        IsVisible="False" />
 
-                <Border Grid.Row="4"
+                      <Border Grid.Row="5"
                         StrokeThickness="0"
                         BackgroundColor="{AppThemeBinding Light=#F6F4FF, Dark=#242036}"
                         Padding="12,10">
@@ -94,7 +116,7 @@
                            Opacity="0.72" />
                 </Border>
 
-                <Grid Grid.Row="5"
+                    <Grid Grid.Row="6"
                       ColumnDefinitions="*,*"
                       ColumnSpacing="12"
                       Margin="0,8,0,0">

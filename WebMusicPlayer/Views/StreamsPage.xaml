@@ -1,40 +1,40 @@
-<?xml version="1.0" encoding="utf-8" ?>
+<?xml version="1.0" encoding="utf-8"?>
 <ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
-             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-             xmlns:loc="clr-namespace:WebMusicPlayer.Localization"
-             xmlns:models="clr-namespace:WebMusicPlayer.Models"
-             x:Class="WebMusicPlayer.Views.StreamsPage"
-             x:Name="StreamsRoot">
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:loc="clr-namespace:WebMusicPlayer.Localization"
+    xmlns:models="clr-namespace:WebMusicPlayer.Models"
+    x:Class="WebMusicPlayer.Views.StreamsPage"
+    x:Name="StreamsRoot">
 
     <Grid RowDefinitions="Auto,*">
         <Border StrokeThickness="0"
-                BackgroundColor="{AppThemeBinding Light=#F1EEFF, Dark=#1E1830}"
-                Padding="14,12"
-                Margin="0,0,0,12">
+            BackgroundColor="{AppThemeBinding Light=#F1EEFF, Dark=#1E1830}"
+            Padding="14,12"
+            Margin="0,0,0,12">
             <Border.StrokeShape>
-                <RoundRectangle CornerRadius="8"/>
+                <RoundRectangle CornerRadius="8" />
             </Border.StrokeShape>
             <VerticalStackLayout Spacing="4">
                 <Label Text="{Binding StreamsSummaryText}"
-                       FontSize="13"
-                       Opacity="0.82" />
+                    FontSize="13"
+                    Opacity="0.82" />
             </VerticalStackLayout>
         </Border>
 
         <CollectionView Grid.Row="1"
-                        ItemsSource="{Binding VisibleStreams}"
-                        SelectionMode="None">
+            ItemsSource="{Binding VisibleStreams}"
+            SelectionMode="None">
             <CollectionView.EmptyView>
                 <VerticalStackLayout Padding="24"
-                                     Spacing="10"
-                                     VerticalOptions="Center">
-                          <Label Text="{loc:Translate StreamsEmptyTitle}"
-                           FontFamily="OpenSansSemibold"
-                           FontSize="18"
-                           HorizontalTextAlignment="Center" />
-                          <Label Text="{loc:Translate StreamsEmptySubtitle}"
-                           HorizontalTextAlignment="Center"
-                           Opacity="0.72" />
+                    Spacing="10"
+                    VerticalOptions="Center">
+                    <Label Text="{loc:Translate StreamsEmptyTitle}"
+                        FontFamily="OpenSansSemibold"
+                        FontSize="18"
+                        HorizontalTextAlignment="Center" />
+                    <Label Text="{loc:Translate StreamsEmptySubtitle}"
+                        HorizontalTextAlignment="Center"
+                        Opacity="0.72" />
                 </VerticalStackLayout>
             </CollectionView.EmptyView>
 
@@ -42,60 +42,86 @@
                 <DataTemplate>
                     <SwipeView Margin="0,0,0,12">
                         <SwipeView.LeftItems>
-                            <SwipeItems >
+                            <SwipeItems>
                                 <SwipeItem Text="{Binding FavouriteActionText}"
-                                           BackgroundColor="#F59E0B"
-                                           Command="{Binding Source={x:Reference StreamsRoot}, Path=BindingContext.ToggleFavouriteCommand}"
-                                           CommandParameter="{Binding .}" />
+                                    BackgroundColor="#F59E0B"
+                                    Command="{Binding Source={x:Reference StreamsRoot}, Path=BindingContext.ToggleFavouriteCommand}"
+                                    CommandParameter="{Binding .}" />
                             </SwipeItems>
                         </SwipeView.LeftItems>
 
                         <SwipeView.RightItems>
-                            <SwipeItems >
+                            <SwipeItems>
                                 <SwipeItem Text="{loc:Translate SwipeDelete}"
-                                           BackgroundColor="#DC2626"
-                                           Invoked="OnDeleteStreamInvoked" />
+                                    BackgroundColor="#DC2626"
+                                    Invoked="OnDeleteStreamInvoked" />
                             </SwipeItems>
                         </SwipeView.RightItems>
 
                         <Border StrokeThickness="0"
-                                BackgroundColor="{AppThemeBinding Light=White, Dark=#1B1B22}"
-                                Padding="16,14">
+                            BackgroundColor="{AppThemeBinding Light=White, Dark=#1B1B22}"
+                            Padding="0,14,16,14">
                             <Border.StrokeShape>
-                                <RoundRectangle CornerRadius="8"/>
+                                <RoundRectangle CornerRadius="8" />
                             </Border.StrokeShape>
-                            <Grid RowDefinitions="Auto,Auto,Auto"
-                                  ColumnDefinitions="*,Auto">
-                                <HorizontalStackLayout Spacing="8">
-                                    <Label Text="{Binding Name}"
-                                           FontFamily="OpenSansSemibold"
-                                           FontSize="16" />
-                                    <Label Text="{Binding OriginLabel}"
-                                           VerticalOptions="Center"
-                                           FontSize="11" 
-                                           Opacity="0.3"/>
-                                </HorizontalStackLayout>
-                                <Label Grid.Column="1"
-                                       Text="{Binding FavouriteGlyph}"
-                                        FontFamily="{x:Static models:AppIcons.FontFamily}"
-                                       FontSize="20"
-                                       TextColor="#F59E0B"
-                                       VerticalTextAlignment="Center" />
-                                <Label Grid.Row="1"
-                                       Grid.ColumnSpan="2"
-                                       Text="{Binding Url}"
-                                       FontSize="12"
-                                       LineBreakMode="TailTruncation"
-                                       Opacity="0.72" />
 
-                                <Button Grid.RowSpan="3"
+                            <HorizontalStackLayout>
+                                <Border x:Name="playingIndicator" 
+                                        WidthRequest="6" 
+                                        HeightRequest="18"
+                                        Background="#522dd4"
+                                        StrokeThickness="0"
+                                        IsVisible="False">
+                                    <Border.StrokeShape>
+                                        <RoundRectangle CornerRadius="4"/>
+                                    </Border.StrokeShape>
+                                    <Border.Triggers>
+                                        <DataTrigger TargetType="Border" Value="True">
+                                            <DataTrigger.Binding>
+                                                <MultiBinding Converter="{StaticResource ValueEqualsConverter}">
+                                                    <Binding Source="{x:Reference StreamsRoot}" Path="BindingContext.CurrentStream.Url" />
+                                                    <Binding Path="Url" />
+                                                </MultiBinding>
+                                            </DataTrigger.Binding>
+                                            <Setter Property="IsVisible" Value="True"/>
+                                        </DataTrigger>
+                                    </Border.Triggers>
+                                </Border>
+
+                                <Grid RowDefinitions="Auto,Auto,Auto"
+                                    ColumnDefinitions="*,Auto"
+                                    Margin="16,0,0,0">
+                                    <HorizontalStackLayout Spacing="8">
+                                        <Label Text="{Binding Name}"
+                                            FontFamily="OpenSansSemibold"
+                                            FontSize="16" />
+                                        <Label Text="{Binding OriginLabel}"
+                                            VerticalOptions="Center"
+                                            FontSize="11"
+                                            Opacity="0.3" />
+                                    </HorizontalStackLayout>
+                                    <Label Grid.Column="1"
+                                        Text="{Binding FavouriteGlyph}"
+                                        FontFamily="{x:Static models:AppIcons.FontFamily}"
+                                        FontSize="20"
+                                        TextColor="#F59E0B"
+                                        VerticalTextAlignment="Center" />
+                                    <Label Grid.Row="1"
+                                        Grid.ColumnSpan="2"
+                                        Text="{Binding Url}"
+                                        FontSize="12"
+                                        LineBreakMode="TailTruncation"
+                                        Opacity="0.72" />
+
+                                    <Button Grid.RowSpan="3"
                                         Grid.ColumnSpan="2"
                                         Text=""
                                         BackgroundColor="Transparent"
                                         BorderWidth="0"
                                         Command="{Binding Source={x:Reference StreamsRoot}, Path=BindingContext.PlayStreamCommand}"
                                         CommandParameter="{Binding .}" />
-                            </Grid>
+                                </Grid>
+                            </HorizontalStackLayout>
                         </Border>
                     </SwipeView>
                 </DataTemplate>

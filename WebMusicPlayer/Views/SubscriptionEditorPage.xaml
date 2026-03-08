@@ -24,7 +24,7 @@
                         Opacity="0.24" />
             </Border.Shadow>
 
-            <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto"
+            <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto"
                   RowSpacing="12">
                 <Grid ColumnDefinitions="Auto,*,Auto"
                       ColumnSpacing="10">
@@ -63,26 +63,15 @@
                     </Border>
                 </VerticalStackLayout>
 
-                <Grid Grid.Row="3" ColumnDefinitions="*,*" ColumnSpacing="12">
-                    <VerticalStackLayout Spacing="6">
-                        <Label Text="{loc:Translate SubscriptionMaxDepthLabel}" FontFamily="OpenSansSemibold" FontSize="13" />
-                        <Border StrokeThickness="1" Stroke="{AppThemeBinding Light=#DDD7FA, Dark=#3B3453}" BackgroundColor="{AppThemeBinding Light=#FCFBFF, Dark=#23232D}" Padding="8,4">
-                            <Border.StrokeShape>
-                                <RoundRectangle CornerRadius="8" />
-                            </Border.StrokeShape>
-                            <Entry x:Name="DepthEntry" Placeholder="{loc:Translate SubscriptionMaxDepthPlaceholder}" Keyboard="Numeric" ReturnType="Next" Completed="OnDepthCompleted" />
-                        </Border>
-                    </VerticalStackLayout>
-                    <VerticalStackLayout Grid.Column="1" Spacing="6">
-                        <Label Text="{loc:Translate SubscriptionMaxCountLabel}" FontFamily="OpenSansSemibold" FontSize="13" />
-                        <Border StrokeThickness="1" Stroke="{AppThemeBinding Light=#DDD7FA, Dark=#3B3453}" BackgroundColor="{AppThemeBinding Light=#FCFBFF, Dark=#23232D}" Padding="8,4">
-                            <Border.StrokeShape>
-                                <RoundRectangle CornerRadius="8" />
-                            </Border.StrokeShape>
-                            <Entry x:Name="CountEntry" Placeholder="{loc:Translate SubscriptionMaxCountPlaceholder}" Keyboard="Numeric" ReturnType="Done" Completed="OnSaveClicked" />
-                        </Border>
-                    </VerticalStackLayout>
-                </Grid>
+                <VerticalStackLayout Grid.Row="3" Spacing="6">
+                    <Label Text="{loc:Translate SubscriptionMaxCountLabel}" FontFamily="OpenSansSemibold" FontSize="13" />
+                    <Border StrokeThickness="1" Stroke="{AppThemeBinding Light=#DDD7FA, Dark=#3B3453}" BackgroundColor="{AppThemeBinding Light=#FCFBFF, Dark=#23232D}" Padding="8,4">
+                        <Border.StrokeShape>
+                            <RoundRectangle CornerRadius="8" />
+                        </Border.StrokeShape>
+                        <Entry x:Name="CountEntry" Placeholder="{loc:Translate SubscriptionMaxCountPlaceholder}" Keyboard="Numeric" ReturnType="Done" Completed="OnSaveClicked" />
+                    </Border>
+                </VerticalStackLayout>
 
                 <Label Grid.Row="4"
                        x:Name="ErrorLabel"

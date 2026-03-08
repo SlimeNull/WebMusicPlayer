@@ -29,7 +29,7 @@ public partial class SubscriptionsPage : ContentView
             TranslateExtension.Get("EditorEditSubscriptionTitle"),
             TranslateExtension.Get("EditorEditSubscriptionSubtitle"),
             TranslateExtension.Get("EditorEditSubscriptionSave"),
-            new SubscriptionEditorResult(subscription.Name, subscription.Url, subscription.MaxPlaylistDepth, subscription.MaxStreamCount));
+            new SubscriptionEditorResult(subscription.Name, subscription.Url, subscription.MaxStreamCount));
         if (result is null)
         {
             return;
@@ -37,7 +37,7 @@ public partial class SubscriptionsPage : ContentView
 
         try
         {
-            await viewModel.EditSubscriptionAsync(subscription, result.Name, result.Url, result.MaxPlaylistDepth, result.MaxStreamCount);
+            await viewModel.EditSubscriptionAsync(subscription, result.Name, result.Url, result.MaxStreamCount);
         }
         catch (Exception ex)
         {

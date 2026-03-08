@@ -17,7 +17,6 @@ public partial class SubscriptionEditorPage : ContentPage
 
         NameEntry.Text = initialValue?.Name ?? string.Empty;
         UrlEntry.Text = initialValue?.Url ?? string.Empty;
-        DepthEntry.Text = (initialValue?.MaxPlaylistDepth ?? SubscriptionImportOptions.Default.MaxPlaylistDepth).ToString();
         CountEntry.Text = (initialValue?.MaxStreamCount ?? SubscriptionImportOptions.Default.MaxStreamCount).ToString();
     }
 
@@ -46,9 +45,7 @@ public partial class SubscriptionEditorPage : ContentPage
 
     private void OnNameCompleted(object? sender, EventArgs e) => UrlEntry.Focus();
 
-    private void OnUrlCompleted(object? sender, EventArgs e) => DepthEntry.Focus();
-
-    private void OnDepthCompleted(object? sender, EventArgs e) => CountEntry.Focus();
+    private void OnUrlCompleted(object? sender, EventArgs e) => CountEntry.Focus();
 
     private async void OnCancelClicked(object? sender, EventArgs e) => await CloseAsync(null);
 
@@ -70,19 +67,13 @@ public partial class SubscriptionEditorPage : ContentPage
             return;
         }
 
-        if (!int.TryParse(DepthEntry.Text?.Trim(), out var maxDepth) || maxDepth < 0 || maxDepth > 32)
-        {
-            ShowError(TranslateExtension.Get("ValidationMaxDepthRange"));
-            return;
-        }
-
         if (!int.TryParse(CountEntry.Text?.Trim(), out var maxCount) || maxCount <= 0 || maxCount > 200000)
         {
             ShowError(TranslateExtension.Get("ValidationMaxCountRange"));
             return;
         }
 
-        await CloseAsync(new SubscriptionEditorResult(name, url, maxDepth, maxCount));
+        await CloseAsync(new SubscriptionEditorResult(name, url, maxCount));
     }
 
     private void ShowError(string message)

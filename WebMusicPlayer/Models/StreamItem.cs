@@ -15,6 +15,9 @@ public partial class StreamItem : ObservableObject
     private string url = string.Empty;
 
     [ObservableProperty]
+    private string? artworkUrl;
+
+    [ObservableProperty]
     private bool isFavourite;
 
     [ObservableProperty]

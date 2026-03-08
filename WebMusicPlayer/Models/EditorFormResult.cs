@@ -1,3 +1,3 @@
 namespace WebMusicPlayer.Models;
 
-public sealed record EditorFormResult(string PrimaryValue, string SecondaryValue);
+public sealed record EditorFormResult(string PrimaryValue, string SecondaryValue, string TertiaryValue = "");

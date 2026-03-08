@@ -9,4 +9,7 @@ public sealed record EditorFormOptions(
     string SecondaryPlaceholder,
     string SaveButtonText,
     string PrimaryValue = "",
-    string SecondaryValue = "");
+    string SecondaryValue = "",
+    string? TertiaryLabel = null,
+    string? TertiaryPlaceholder = null,
+    string TertiaryValue = "");

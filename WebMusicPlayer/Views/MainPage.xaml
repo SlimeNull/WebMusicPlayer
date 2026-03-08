@@ -197,15 +197,42 @@
             </Border.Shadow>
             <Grid ColumnDefinitions="*,Auto"
                   ColumnSpacing="12">
-                <VerticalStackLayout Spacing="4">
-                    <Label Text="{Binding CurrentStreamName}"
+                <Grid>
+                    <VerticalStackLayout Spacing="4">
+                        <Label Text="{Binding CurrentStreamName}"
                            FontFamily="OpenSansSemibold"
                            FontSize="16" />
-                    <Label Text="{Binding CurrentStreamSubtitle}"
+                        <Label Text="{Binding CurrentStreamSubtitle}"
                            FontSize="12"
                            Opacity="0.72" />
-                </VerticalStackLayout>
+                    </VerticalStackLayout>
 
+                    <Border IsVisible="{Binding IsLoading}"
+                            Background="#88000000"
+                            VerticalOptions="Center"
+                            HorizontalOptions="Center"
+                            StrokeThickness="0"
+                            Padding="8">
+                        <Border.StrokeShape>
+                            <RoundRectangle CornerRadius="8"/>
+                        </Border.StrokeShape>
+                        <HorizontalStackLayout>
+                            <ActivityIndicator IsRunning="{Binding IsLoading}"
+                                               WidthRequest="32"
+                                               HeightRequest="32"
+                                               Color="White"/>
+
+                            <Label Text="{loc:Translate Loading}"
+                                   TextColor="White"
+                                   Margin="4,0,0,0"
+                                   VerticalOptions="Center"/>
+                            <Label Text="..."
+                                   TextColor="White"
+                                   VerticalOptions="Center"/>
+                        </HorizontalStackLayout>
+                    </Border>
+                </Grid>
+                
                 <Button Grid.Column="1"
                         Text="{Binding PlaybackButtonText}"
                         Command="{Binding TogglePlaybackCommand}"

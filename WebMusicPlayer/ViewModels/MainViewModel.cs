@@ -50,6 +50,9 @@ public sealed partial class MainViewModel(AppStateStore appStateStore, StreamImp
     private bool isPlaying;
 
     [ObservableProperty]
+    private bool isLoading;
+
+    [ObservableProperty]
     private bool isBusy;
 
     [ObservableProperty]
@@ -173,10 +176,11 @@ public sealed partial class MainViewModel(AppStateStore appStateStore, StreamImp
         await SaveStateAsync();
     }
 
-    public async Task AddManualStreamAsync(string name, string address)
+    public async Task AddManualStreamAsync(string name, string address, string? artworkUrl)
     {
         var normalizedUrl = ValidateHttpAddress(address);
         var normalizedName = NormalizeName(name, normalizedUrl);
+        var normalizedArtworkUrl = ValidateOptionalHttpAddress(artworkUrl);
 
         if (ContainsStream(normalizedUrl))
         {
@@ -187,6 +191,7 @@ public sealed partial class MainViewModel(AppStateStore appStateStore, StreamImp
         {
             Name = normalizedName,
             Url = normalizedUrl,
+            ArtworkUrl = normalizedArtworkUrl,
             OriginKind = StreamOriginKind.Manual,
             IsFavourite = false
         };
@@ -208,17 +213,15 @@ public sealed partial class MainViewModel(AppStateStore appStateStore, StreamImp
         });
     }
 
-    public async Task AddSubscriptionAsync(string name, string address, int maxPlaylistDepth, int maxStreamCount, CancellationToken cancellationToken = default)
+    public async Task AddSubscriptionAsync(string name, string address, int maxStreamCount, CancellationToken cancellationToken = default)
     {
         var normalizedUrl = ValidateHttpAddress(address);
         var normalizedName = NormalizeName(name, normalizedUrl);
-        var normalizedDepth = ValidateMaxPlaylistDepth(maxPlaylistDepth);
         var normalizedStreamCount = ValidateMaxStreamCount(maxStreamCount);
         var existing = Subscriptions.FirstOrDefault(subscription => string.Equals(subscription.Url, normalizedUrl, StringComparison.OrdinalIgnoreCase));
         if (existing is not null)
         {
             existing.Name = normalizedName;
-            existing.MaxPlaylistDepth = normalizedDepth;
             existing.MaxStreamCount = normalizedStreamCount;
             await RefreshSubscriptionAsync(existing, cancellationToken);
             return;
@@ -228,7 +231,6 @@ public sealed partial class MainViewModel(AppStateStore appStateStore, StreamImp
         {
             Name = normalizedName,
             Url = normalizedUrl,
-            MaxPlaylistDepth = normalizedDepth,
             MaxStreamCount = normalizedStreamCount
         };
 
@@ -238,11 +240,10 @@ public sealed partial class MainViewModel(AppStateStore appStateStore, StreamImp
         await RefreshSubscriptionAsync(subscriptionItem, cancellationToken);
     }
 
-    public async Task EditSubscriptionAsync(SubscriptionItem subscription, string name, string address, int maxPlaylistDepth, int maxStreamCount, CancellationToken cancellationToken = default)
+    public async Task EditSubscriptionAsync(SubscriptionItem subscription, string name, string address, int maxStreamCount, CancellationToken cancellationToken = default)
     {
         subscription.Name = NormalizeName(name, address);
         subscription.Url = ValidateHttpAddress(address);
-        subscription.MaxPlaylistDepth = ValidateMaxPlaylistDepth(maxPlaylistDepth);
         subscription.MaxStreamCount = ValidateMaxStreamCount(maxStreamCount);
         await SaveStateAsync();
         await RefreshSubscriptionAsync(subscription, cancellationToken);
@@ -498,8 +499,14 @@ public sealed partial class MainViewModel(AppStateStore appStateStore, StreamImp
     {
         foreach (var candidate in candidates)
         {
-            if (ContainsStream(candidate.Url))
+            var existingStream = FindStream(candidate.Url);
+            if (existingStream is not null)
             {
+                if (string.IsNullOrWhiteSpace(existingStream.ArtworkUrl) && !string.IsNullOrWhiteSpace(candidate.ArtworkUrl))
+                {
+                    existingStream.ArtworkUrl = candidate.ArtworkUrl;
+                }
+
                 continue;
             }
 
@@ -507,6 +514,7 @@ public sealed partial class MainViewModel(AppStateStore appStateStore, StreamImp
             {
                 Name = NormalizeName(candidate.Name, candidate.Url),
                 Url = candidate.Url,
+                ArtworkUrl = candidate.ArtworkUrl,
                 OriginKind = originKind,
                 SubscriptionId = subscriptionId,
                 SubscriptionName = subscriptionName,
@@ -616,6 +624,11 @@ public sealed partial class MainViewModel(AppStateStore appStateStore, StreamImp
         return _state.Streams.Any(stream => string.Equals(stream.Url, url, StringComparison.OrdinalIgnoreCase));
     }
 
+    private StreamItem? FindStream(string url)
+    {
+        return _state.Streams.FirstOrDefault(stream => string.Equals(stream.Url, url, StringComparison.OrdinalIgnoreCase));
+    }
+
     private async Task SaveStateAsync()
     {
         await _appStateStore.SaveAsync(_state);
@@ -713,16 +726,6 @@ public sealed partial class MainViewModel(AppStateStore appStateStore, StreamImp
         return uri.AbsoluteUri;
     }
 
-    private static int ValidateMaxPlaylistDepth(int value)
-    {
-        if (value < 0 || value > 32)
-        {
-            throw new InvalidOperationException(TranslateExtension.Get("ValidationMaxDepthRange"));
-        }
-
-        return value;
-    }
-
     private static int ValidateMaxStreamCount(int value)
     {
         if (value <= 0 || value > 200000)
@@ -731,6 +734,16 @@ public sealed partial class MainViewModel(AppStateStore appStateStore, StreamImp
         }
 
         return value;
+    }
+
+    private static string? ValidateOptionalHttpAddress(string? address)
+    {
+        if (string.IsNullOrWhiteSpace(address))
+        {
+            return null;
+        }
+
+        return ValidateHttpAddress(address);
     }
 
     private static string NormalizeName(string? name, string address)

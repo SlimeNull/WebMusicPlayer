@@ -205,7 +205,7 @@
     <value>标记喜欢</value>
   </data>
   <data name="SubscriptionLimitsFormat" xml:space="preserve">
-    <value>递归 {0} 层 · 最多 {1} 个媒体流</value>
+    <value>最多 {0} 条媒体流</value>
   </data>
   <data name="SubscriptionLastUpdatedFormat" xml:space="preserve">
     <value>上次更新: {0:yyyy-MM-dd HH:mm}</value>
@@ -298,7 +298,7 @@
     <value>添加媒体流</value>
   </data>
   <data name="EditorAddStreamSubtitle" xml:space="preserve">
-    <value>输入名称与网络地址，即可将新的媒体流加入列表。</value>
+    <value>输入名称、媒体流地址，以及可选的封面地址，即可将新的媒体流加入列表。</value>
   </data>
   <data name="StreamNameLabel" xml:space="preserve">
     <value>媒体流名称</value>
@@ -312,11 +312,17 @@
   <data name="StreamUrlPlaceholder" xml:space="preserve">
     <value>https://example.com/live.m3u8</value>
   </data>
+  <data name="StreamArtworkUrlLabel" xml:space="preserve">
+    <value>封面地址（可留空）</value>
+  </data>
+  <data name="StreamArtworkUrlPlaceholder" xml:space="preserve">
+    <value>https://example.com/logo.png</value>
+  </data>
   <data name="EditorAddStreamSave" xml:space="preserve">
     <value>添加媒体流</value>
   </data>
   <data name="EditorFormHint" xml:space="preserve">
-    <value>地址必须是有效的 http/https 地址。支持音频流与 m3u8。</value>
+    <value>媒体流地址必须是有效的 http/https 地址；如果填写封面地址，也必须使用 http/https。</value>
   </data>
   <data name="EditorAddSubscriptionTitle" xml:space="preserve">
     <value>添加订阅</value>
@@ -331,7 +337,7 @@
     <value>编辑订阅</value>
   </data>
   <data name="EditorEditSubscriptionSubtitle" xml:space="preserve">
-    <value>修改订阅名称、地址或抓取限制后，会重新拉取该订阅的媒体流。</value>
+    <value>修改订阅名称、地址或最大媒体流数量后，会重新拉取该订阅的媒体流。</value>
   </data>
   <data name="EditorEditSubscriptionSave" xml:space="preserve">
     <value>保存修改</value>
@@ -361,7 +367,7 @@
     <value>例如：1000</value>
   </data>
   <data name="SubscriptionEditorHint" xml:space="preserve">
-    <value>系统会使用队列解析 m3u/m3u8，并按你设置的递归层数和最大媒体流数量提前停止，避免超大订阅拖垮更新。</value>
+    <value>系统会直接解析 M3U 条目，并在达到最大媒体流数量后停止，避免超大订阅拖垮更新。</value>
   </data>
   <data name="SubscriptionNameRequired" xml:space="preserve">
     <value>请输入订阅名称。</value>
@@ -431,5 +437,8 @@
   </data>
   <data name="DeleteSubscriptionConfirmMessageFormat" xml:space="preserve">
     <value>要删除订阅 “{0}” 以及它带来的媒体流吗？</value>
+  </data>
+  <data name="Loading" xml:space="preserve">
+    <value>加载中</value>
   </data>
 </root>

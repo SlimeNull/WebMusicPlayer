@@ -1,3 +1,3 @@
 namespace WebMusicPlayer.Models;
 
-public sealed record ImportStreamCandidate(string Name, string Url);
+public sealed record ImportStreamCandidate(string Name, string Url, string? ArtworkUrl = null);

@@ -15,26 +15,18 @@ public partial class SubscriptionItem : ObservableObject
     private string url = string.Empty;
 
     [ObservableProperty]
-    private int maxPlaylistDepth = SubscriptionImportOptions.Default.MaxPlaylistDepth;
-
-    [ObservableProperty]
     private int maxStreamCount = SubscriptionImportOptions.Default.MaxStreamCount;
 
     [ObservableProperty]
     private DateTimeOffset? lastUpdatedUtc;
 
-    public string LimitsLabel => TranslateExtension.Format("SubscriptionLimitsFormat", MaxPlaylistDepth, MaxStreamCount);
+    public string LimitsLabel => TranslateExtension.Format("SubscriptionLimitsFormat", MaxStreamCount);
 
     public string LastUpdatedLabel => LastUpdatedUtc.HasValue
         ? TranslateExtension.Format("SubscriptionLastUpdatedFormat", LastUpdatedUtc.Value.LocalDateTime)
         : TranslateExtension.Get("SubscriptionLastUpdatedNever");
 
-    public SubscriptionImportOptions GetImportOptions() => new(MaxPlaylistDepth, MaxStreamCount);
-
-    partial void OnMaxPlaylistDepthChanged(int value)
-    {
-        OnPropertyChanged(nameof(LimitsLabel));
-    }
+    public SubscriptionImportOptions GetImportOptions() => new(MaxStreamCount);
 
     partial void OnMaxStreamCountChanged(int value)
     {

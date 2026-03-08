@@ -115,7 +115,9 @@ public partial class MainPage : ContentPage
             PrimaryPlaceholder: TranslateExtension.Get("StreamNamePlaceholder"),
             SecondaryLabel: TranslateExtension.Get("StreamUrlLabel"),
             SecondaryPlaceholder: TranslateExtension.Get("StreamUrlPlaceholder"),
-            SaveButtonText: TranslateExtension.Get("EditorAddStreamSave")));
+            SaveButtonText: TranslateExtension.Get("EditorAddStreamSave"),
+            TertiaryLabel: TranslateExtension.Get("StreamArtworkUrlLabel"),
+            TertiaryPlaceholder: TranslateExtension.Get("StreamArtworkUrlPlaceholder")));
         if (result is null)
         {
             return;
@@ -123,7 +125,7 @@ public partial class MainPage : ContentPage
 
         try
         {
-            await _viewModel.AddManualStreamAsync(result.PrimaryValue, result.SecondaryValue);
+            await _viewModel.AddManualStreamAsync(result.PrimaryValue, result.SecondaryValue, result.TertiaryValue);
         }
         catch (Exception ex)
         {
@@ -168,7 +170,7 @@ public partial class MainPage : ContentPage
 
         try
         {
-            await _viewModel.AddSubscriptionAsync(result.Name, result.Url, result.MaxPlaylistDepth, result.MaxStreamCount);
+            await _viewModel.AddSubscriptionAsync(result.Name, result.Url, result.MaxStreamCount);
         }
         catch (Exception ex)
         {
@@ -211,6 +213,15 @@ public partial class MainPage : ContentPage
         else if (e.NewState == MediaElementState.Stopped)
         {
             _viewModel.SetPlaybackState(false);
+        }
+
+        if (e.NewState is MediaElementState.Opening or MediaElementState.Buffering)
+        {
+            _viewModel.IsLoading = true;
+        }
+        else
+        {
+            _viewModel.IsLoading = false;
         }
     }
 
@@ -255,7 +266,7 @@ public partial class MainPage : ContentPage
             return;
         }
 
-        if (e.PropertyName is nameof(StreamItem.Name) or nameof(StreamItem.OriginLabel))
+        if (e.PropertyName is nameof(StreamItem.Name) or nameof(StreamItem.OriginLabel) or nameof(StreamItem.ArtworkUrl))
         {
             MainThread.BeginInvokeOnMainThread(() => ApplyPlayerMetadata(stream));
         }
@@ -265,7 +276,9 @@ public partial class MainPage : ContentPage
     {
         Player.MetadataTitle = stream.Name;
         Player.MetadataArtist = stream.OriginLabel;
-        Player.MetadataArtworkUrl = _metadataArtworkUrl;
+        Player.MetadataArtworkUrl = string.IsNullOrWhiteSpace(stream.ArtworkUrl)
+            ? _metadataArtworkUrl
+            : stream.ArtworkUrl;
     }
 
     private void ClearPlayerMetadata()

@@ -42,7 +42,7 @@ public partial class MainPage : ContentPage
         try
         {
             await _viewModel.InitializeAsync();
-            _metadataArtworkUrl = await _mediaArtworkService.GetArtworkDataUrlAsync();
+            _metadataArtworkUrl = await _mediaArtworkService.GetArtworkUrlAsync();
         }
         catch (Exception ex)
         {
@@ -196,6 +196,22 @@ public partial class MainPage : ContentPage
             ClearPlayerMetadata();
             _viewModel.SetPlaybackState(false);
         });
+    }
+
+    private void OnPlayerStateChanged(object sender, MediaStateChangedEventArgs e)
+    {
+        if (e.NewState == MediaElementState.Playing)
+        {
+            _viewModel.SetPlaybackState(true);
+        }
+        else if (e.NewState == MediaElementState.Paused)
+        {
+            _viewModel.SetPlaybackState(false);
+        }
+        else if (e.NewState == MediaElementState.Stopped)
+        {
+            _viewModel.SetPlaybackState(false);
+        }
     }
 
     private void OnPlayerMediaOpened(object? sender, EventArgs e)

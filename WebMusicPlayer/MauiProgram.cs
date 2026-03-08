@@ -29,6 +29,7 @@ namespace WebMusicPlayer
 
             builder.Services.AddSingleton<HttpClient>();
             builder.Services.AddSingleton<AppStateStore>();
+            builder.Services.AddSingleton<MediaArtworkService>();
             builder.Services.AddSingleton<StreamImportService>();
             builder.Services.AddSingleton<MainViewModel>();
             builder.Services.AddSingleton<MainPage>();

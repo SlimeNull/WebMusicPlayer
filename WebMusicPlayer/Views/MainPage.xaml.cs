@@ -2,6 +2,7 @@ using System.ComponentModel;
 using CommunityToolkit.Maui.Core;
 using WebMusicPlayer.Localization;
 using WebMusicPlayer.Models;
+using WebMusicPlayer.Services;
 using WebMusicPlayer.ViewModels;
 
 namespace WebMusicPlayer.Views;
@@ -9,12 +10,15 @@ namespace WebMusicPlayer.Views;
 public partial class MainPage : ContentPage
 {
     private readonly MainViewModel _viewModel;
+    private readonly MediaArtworkService _mediaArtworkService;
     private bool _isInitialized;
     private StreamItem? _metadataStream;
+    private string _metadataArtworkUrl = string.Empty;
 
-    public MainPage(MainViewModel viewModel)
+    public MainPage(MainViewModel viewModel, MediaArtworkService mediaArtworkService)
     {
         BindingContext = _viewModel = viewModel;
+        _mediaArtworkService = mediaArtworkService;
         InitializeComponent();
 
         _viewModel.PlayRequested += OnPlayRequested;
@@ -38,6 +42,7 @@ public partial class MainPage : ContentPage
         try
         {
             await _viewModel.InitializeAsync();
+            _metadataArtworkUrl = await _mediaArtworkService.GetArtworkDataUrlAsync();
         }
         catch (Exception ex)
         {
@@ -244,7 +249,7 @@ public partial class MainPage : ContentPage
     {
         Player.MetadataTitle = stream.Name;
         Player.MetadataArtist = stream.OriginLabel;
-        Player.MetadataArtworkUrl = string.Empty;
+        Player.MetadataArtworkUrl = _metadataArtworkUrl;
     }
 
     private void ClearPlayerMetadata()

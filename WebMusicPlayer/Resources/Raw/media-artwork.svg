@@ -1,0 +1,39 @@
+<svg width="456" height="456" xmlns="http://www.w3.org/2000/svg" xmlns:svg="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0.11" x2="0.89" y1="0.08" y2="0.92">
+      <stop offset="0" stop-color="#0F172A"/>
+      <stop offset="0.5" stop-color="#312E81"/>
+      <stop offset="1" stop-color="#0EA5E9"/>
+    </linearGradient>
+    <radialGradient cx="0" cy="0" gradientTransform="translate(348 102) rotate(90) scale(126)" gradientUnits="userSpaceOnUse" id="glowA" r="1">
+      <stop offset="0" stop-color="#67E8F9" stop-opacity="0.92"/>
+      <stop offset="0.55" stop-color="#60A5FA" stop-opacity="0.36"/>
+      <stop offset="1" stop-color="#60A5FA" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient cx="0" cy="0" gradientTransform="translate(108 372) rotate(90) scale(148)" gradientUnits="userSpaceOnUse" id="glowB" r="1">
+      <stop offset="0" stop-color="#C084FC" stop-opacity="0.72"/>
+      <stop offset="0.58" stop-color="#8B5CF6" stop-opacity="0.24"/>
+      <stop offset="1" stop-color="#8B5CF6" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="wave" x1="0.03" x2="0.92" y1="1.21" y2="-0.47">
+      <stop offset="0" stop-color="#38BDF8"/>
+      <stop offset="1" stop-color="#C4B5FD"/>
+    </linearGradient>
+  </defs>
+  <g class="layer">
+    <title>Layer 1</title>
+    <rect fill="url(#bg)" height="456" id="svg_1" rx="108" transform="matrix(1 0 0 1 0 0)" width="456"/>
+    <circle cx="348" cy="102" fill="url(#glowA)" id="svg_2" r="126"/>
+    <circle cx="108" cy="372" fill="url(#glowB)" id="svg_3" r="148" transform="matrix(1 0 0 1 0 0)"/>
+    <path d="m52,328c66,-50 144,-78 250,-70c52,4 90,-10 120,-44" fill="none" id="svg_4" opacity="0.46" stroke="url(#wave)" stroke-linecap="round" stroke-width="18"/>
+    <path d="m74,388c74,-72 164,-102 310,-88" fill="none" id="svg_5" opacity="0.32" stroke="url(#wave)" stroke-linecap="round" stroke-width="14"/>
+    <circle cx="114" cy="122" fill="#BAE6FD" id="svg_6" opacity="0.72" r="10"/>
+    <circle cx="338" cy="356" fill="#E9D5FF" id="svg_7" opacity="0.7" r="12"/>
+    <path d="m245.49,190.03c37,3 67,34 67,72c0,41 -33,74 -74,74" fill="none" id="svg_11" opacity="0.96" stroke="#FFFFFF" stroke-linecap="round" stroke-width="24"/>
+    <path d="m269.49,142.03c62,6 111,59 111,123c0,68 -55,123 -123,123" fill="none" id="svg_12" opacity="0.76" stroke="#FFFFFF" stroke-linecap="round" stroke-width="18"/>
+    <g id="svg_13" transform="translate(-7 -6) translate(-2 -1) matrix(1 0 0 1 -43.5146 -12.9707)">
+      <circle cx="191.76" cy="305.67" fill="#ffffff" id="svg_9" r="54"/>
+      <path d="m224,286l0,-154c0,-11 7,-20 17,-23l104,-30c14,-4 27,7 27,21l0,48c0,10 -7,18 -16,21l-84,25l0,92c0,41 -33,74 -74,74c-10,0 -19,-2 -28,-5c32,-0.1 54,-27.2 54,-69z" fill="#ffffff" id="svg_10"/>
+    </g>
+  </g>
+</svg>

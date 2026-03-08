@@ -41,29 +41,24 @@
                                FontSize="13"
                                Opacity="0.74" />
                     </VerticalStackLayout>
-                        <Button Grid.Column="2"
-                            Text="×"
-                            WidthRequest="40"
-                            HeightRequest="40"
-                            Padding="0"
-                            CornerRadius="20"
-                            BackgroundColor="{AppThemeBinding Light=#F3F2FA, Dark=#2A2A35}"
-                            TextColor="{AppThemeBinding Light=#242424, Dark=White}"
-                            Clicked="OnCancelClicked" />
                 </Grid>
 
                 <VerticalStackLayout Grid.Row="1" Spacing="6">
                     <Label Text="{loc:Translate SubscriptionNameLabel}" FontFamily="OpenSansSemibold" FontSize="13" />
-                    <Border StrokeThickness="1" Stroke="{AppThemeBinding Light=#DDD7FA, Dark=#3B3453}" BackgroundColor="{AppThemeBinding Light=#FCFBFF, Dark=#23232D}" Padding="12,4">
-                        <Border.StrokeShape><RoundRectangle CornerRadius="12" /></Border.StrokeShape>
+                    <Border StrokeThickness="1" Stroke="{AppThemeBinding Light=#DDD7FA, Dark=#3B3453}" BackgroundColor="{AppThemeBinding Light=#FCFBFF, Dark=#23232D}" Padding="8,4">
+                        <Border.StrokeShape>
+                            <RoundRectangle CornerRadius="8" />
+                        </Border.StrokeShape>
                         <Entry x:Name="NameEntry" Placeholder="{loc:Translate SubscriptionNamePlaceholder}" ClearButtonVisibility="WhileEditing" ReturnType="Next" Completed="OnNameCompleted" />
                     </Border>
                 </VerticalStackLayout>
 
                 <VerticalStackLayout Grid.Row="2" Spacing="6">
                     <Label Text="{loc:Translate SubscriptionUrlLabel}" FontFamily="OpenSansSemibold" FontSize="13" />
-                    <Border StrokeThickness="1" Stroke="{AppThemeBinding Light=#DDD7FA, Dark=#3B3453}" BackgroundColor="{AppThemeBinding Light=#FCFBFF, Dark=#23232D}" Padding="12,4">
-                        <Border.StrokeShape><RoundRectangle CornerRadius="12" /></Border.StrokeShape>
+                    <Border StrokeThickness="1" Stroke="{AppThemeBinding Light=#DDD7FA, Dark=#3B3453}" BackgroundColor="{AppThemeBinding Light=#FCFBFF, Dark=#23232D}" Padding="8,4">
+                        <Border.StrokeShape>
+                            <RoundRectangle CornerRadius="8" />
+                        </Border.StrokeShape>
                         <Entry x:Name="UrlEntry" Placeholder="{loc:Translate SubscriptionUrlPlaceholder}" ClearButtonVisibility="WhileEditing" Keyboard="Url" ReturnType="Next" Completed="OnUrlCompleted" />
                     </Border>
                 </VerticalStackLayout>
@@ -71,15 +66,19 @@
                 <Grid Grid.Row="3" ColumnDefinitions="*,*" ColumnSpacing="12">
                     <VerticalStackLayout Spacing="6">
                         <Label Text="{loc:Translate SubscriptionMaxDepthLabel}" FontFamily="OpenSansSemibold" FontSize="13" />
-                        <Border StrokeThickness="1" Stroke="{AppThemeBinding Light=#DDD7FA, Dark=#3B3453}" BackgroundColor="{AppThemeBinding Light=#FCFBFF, Dark=#23232D}" Padding="12,4">
-                            <Border.StrokeShape><RoundRectangle CornerRadius="12" /></Border.StrokeShape>
+                        <Border StrokeThickness="1" Stroke="{AppThemeBinding Light=#DDD7FA, Dark=#3B3453}" BackgroundColor="{AppThemeBinding Light=#FCFBFF, Dark=#23232D}" Padding="8,4">
+                            <Border.StrokeShape>
+                                <RoundRectangle CornerRadius="8" />
+                            </Border.StrokeShape>
                             <Entry x:Name="DepthEntry" Placeholder="{loc:Translate SubscriptionMaxDepthPlaceholder}" Keyboard="Numeric" ReturnType="Next" Completed="OnDepthCompleted" />
                         </Border>
                     </VerticalStackLayout>
                     <VerticalStackLayout Grid.Column="1" Spacing="6">
                         <Label Text="{loc:Translate SubscriptionMaxCountLabel}" FontFamily="OpenSansSemibold" FontSize="13" />
-                        <Border StrokeThickness="1" Stroke="{AppThemeBinding Light=#DDD7FA, Dark=#3B3453}" BackgroundColor="{AppThemeBinding Light=#FCFBFF, Dark=#23232D}" Padding="12,4">
-                            <Border.StrokeShape><RoundRectangle CornerRadius="12" /></Border.StrokeShape>
+                        <Border StrokeThickness="1" Stroke="{AppThemeBinding Light=#DDD7FA, Dark=#3B3453}" BackgroundColor="{AppThemeBinding Light=#FCFBFF, Dark=#23232D}" Padding="8,4">
+                            <Border.StrokeShape>
+                                <RoundRectangle CornerRadius="8" />
+                            </Border.StrokeShape>
                             <Entry x:Name="CountEntry" Placeholder="{loc:Translate SubscriptionMaxCountPlaceholder}" Keyboard="Numeric" ReturnType="Done" Completed="OnSaveClicked" />
                         </Border>
                     </VerticalStackLayout>
@@ -95,14 +94,16 @@
                         StrokeThickness="0"
                         BackgroundColor="{AppThemeBinding Light=#F6F4FF, Dark=#242036}"
                         Padding="12,10">
-                    <Border.StrokeShape><RoundRectangle CornerRadius="12" /></Border.StrokeShape>
-                          <Label Text="{loc:Translate SubscriptionEditorHint}"
+                    <Border.StrokeShape>
+                        <RoundRectangle CornerRadius="12" />
+                    </Border.StrokeShape>
+                    <Label Text="{loc:Translate SubscriptionEditorHint}"
                            FontSize="12"
                            Opacity="0.72" />
                 </Border>
 
                 <Grid Grid.Row="6" ColumnDefinitions="*,*" ColumnSpacing="12" Margin="0,8,0,0">
-                        <Button Grid.Column="0"
+                    <Button Grid.Column="0"
                             Text="{loc:Translate GenericCancel}"
                             BackgroundColor="{AppThemeBinding Light=#ECE8FB, Dark=#2D2741}"
                             TextColor="{AppThemeBinding Light=#242424, Dark=White}"

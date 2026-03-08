@@ -18,16 +18,16 @@
             <Grid ColumnDefinitions="*,Auto,Auto"
                   ColumnSpacing="8">
                 <VerticalStackLayout Spacing="2">
-                      <HorizontalStackLayout Spacing="8">
-                       <Label Text="{Binding CurrentPageIconGlyph}"
+                    <HorizontalStackLayout Spacing="8">
+                        <Label Text="{Binding CurrentPageIconGlyph}"
                            FontFamily="{x:Static models:AppIcons.FontFamily}"
                            FontSize="24"
                            VerticalTextAlignment="Center" />
-                       <Label Text="{Binding CurrentPageTitle}"
+                        <Label Text="{Binding CurrentPageTitle}"
                            FontFamily="OpenSansSemibold"
                            FontSize="26" />
-                      </HorizontalStackLayout>
-                          <Label Text="{loc:Translate AppName}"
+                    </HorizontalStackLayout>
+                    <Label Text="{loc:Translate AppName}"
                            FontSize="12"
                            Opacity="0.68" />
                 </VerticalStackLayout>
@@ -235,29 +235,37 @@
         <Grid Grid.RowSpan="5"
               BackgroundColor="#66000000"
               IsVisible="{Binding IsBusy}">
-            <VerticalStackLayout HorizontalOptions="Center"
+            <Border BackgroundColor="White"
+                    VerticalOptions="Center"
+                    HorizontalOptions="Center"
+                    Padding="28">
+                <Border.StrokeShape>
+                    <RoundRectangle CornerRadius="12"/>
+                </Border.StrokeShape>
+                <VerticalStackLayout HorizontalOptions="Center"
                                  VerticalOptions="Center"
                                  Spacing="12">
-                <ActivityIndicator IsRunning="{Binding IsBusy}"
+                    <ActivityIndicator IsRunning="{Binding IsBusy}"
                                    WidthRequest="44"
                                    HeightRequest="44" />
-                <Label Text="{Binding BusyText}"
-                       TextColor="White"
-                       HorizontalTextAlignment="Center" />
-            <HorizontalStackLayout Spacing="12"
+                    <Label Text="{Binding BusyText}"
+                           TextColor="Black"
+                           HorizontalTextAlignment="Center" />
+                    <HorizontalStackLayout Spacing="12"
                            IsVisible="{Binding ShowBusyActions}">
-                <Button Text="{loc:Translate BusyAbortButton}"
-                    Command="{Binding AbortBusyOperationCommand}"
-                    IsVisible="{Binding CanAbortBusyOperation}"
-                    BackgroundColor="#F59E0B"
-                    TextColor="White" />
-                <Button Text="{loc:Translate GenericCancel}"
-                    Command="{Binding CancelBusyOperationCommand}"
-                    IsVisible="{Binding CanCancelBusyOperation}"
-                    BackgroundColor="#DC2626"
-                    TextColor="White" />
-            </HorizontalStackLayout>
-            </VerticalStackLayout>
+                        <Button Text="{loc:Translate BusyAbortButton}"
+                                Command="{Binding AbortBusyOperationCommand}"
+                                IsVisible="{Binding CanAbortBusyOperation}"
+                                BackgroundColor="#F59E0B"
+                                TextColor="White" />
+                        <Button Text="{loc:Translate GenericCancel}"
+                                Command="{Binding CancelBusyOperationCommand}"
+                                IsVisible="{Binding CanCancelBusyOperation}"
+                                BackgroundColor="#DC2626"
+                                TextColor="White" />
+                    </HorizontalStackLayout>
+                </VerticalStackLayout>
+            </Border>
         </Grid>
     </Grid>
 </ContentPage>

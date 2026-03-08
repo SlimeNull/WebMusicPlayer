@@ -62,7 +62,7 @@ public partial class StreamFilterPage : ContentPage
                 StrokeThickness = 1,
                 Stroke = Color.FromArgb("#DDD7FA"),
                 BackgroundColor = Color.FromArgb("#FCFBFF"),
-                Padding = new Thickness(12, 10),
+                Padding = new Thickness(8, 6),
                 Content = radio,
                 StrokeShape = new RoundRectangle { CornerRadius = 12 }
             };

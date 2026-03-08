@@ -44,9 +44,9 @@
                     <Border StrokeThickness="1"
                             Stroke="{AppThemeBinding Light=#DDD7FA, Dark=#3B3453}"
                             BackgroundColor="{AppThemeBinding Light=#FCFBFF, Dark=#23232D}"
-                            Padding="12,4">
+                            Padding="8,4">
                         <Border.StrokeShape>
-                            <RoundRectangle CornerRadius="12" />
+                            <RoundRectangle CornerRadius="8" />
                         </Border.StrokeShape>
                         <Entry x:Name="PrimaryEntry"
                                ClearButtonVisibility="WhileEditing"
@@ -63,9 +63,9 @@
                     <Border StrokeThickness="1"
                             Stroke="{AppThemeBinding Light=#DDD7FA, Dark=#3B3453}"
                             BackgroundColor="{AppThemeBinding Light=#FCFBFF, Dark=#23232D}"
-                            Padding="12,4">
+                            Padding="8,4">
                         <Border.StrokeShape>
-                            <RoundRectangle CornerRadius="12" />
+                            <RoundRectangle CornerRadius="8" />
                         </Border.StrokeShape>
                         <Entry x:Name="SecondaryEntry"
                                ClearButtonVisibility="WhileEditing"
@@ -86,7 +86,7 @@
                         BackgroundColor="{AppThemeBinding Light=#F6F4FF, Dark=#242036}"
                         Padding="12,10">
                     <Border.StrokeShape>
-                        <RoundRectangle CornerRadius="12" />
+                        <RoundRectangle CornerRadius="8" />
                     </Border.StrokeShape>
                           <Label x:Name="HintLabel"
                               Text="{loc:Translate EditorFormHint}"

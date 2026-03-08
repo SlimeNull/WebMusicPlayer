@@ -21,7 +21,11 @@ public partial class MainPage : ContentPage
 
     protected override async void OnAppearing()
     {
-        _viewModel.SelectedTab = AppTab.Streams;
+        if (_viewModel.SelectedTab is AppTab.None)
+        {
+            _viewModel.SelectedTab = AppTab.Streams;
+        }
+
         base.OnAppearing();
         if (_isInitialized)
         {

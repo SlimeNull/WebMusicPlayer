@@ -1,112 +1,435 @@
 <?xml version="1.0" encoding="utf-8"?>
 <root>
-  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
-  <resheader name="version"><value>2.0</value></resheader>
-  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, ...</value></resheader>
-  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, ...</value></resheader>
-  <data name="AppName" xml:space="preserve"><value>网络音乐播放器</value></data>
-  <data name="PageTitleFavourites" xml:space="preserve"><value>喜欢</value></data>
-  <data name="PageTitleStreams" xml:space="preserve"><value>媒体流</value></data>
-  <data name="PageTitleSubscriptions" xml:space="preserve"><value>订阅</value></data>
-  <data name="TabFavourites" xml:space="preserve"><value>喜欢</value></data>
-  <data name="TabStreams" xml:space="preserve"><value>媒体流</value></data>
-  <data name="TabSubscriptions" xml:space="preserve"><value>订阅</value></data>
-  <data name="CurrentStreamNoneTitle" xml:space="preserve"><value>尚未选择媒体流</value></data>
-  <data name="CurrentStreamNoneSubtitle" xml:space="preserve"><value>在“喜欢”或“媒体流”中点按一个项目开始播放</value></data>
-  <data name="PlaybackPlay" xml:space="preserve"><value>播放</value></data>
-  <data name="PlaybackStop" xml:space="preserve"><value>停止</value></data>
-  <data name="FilterAllSources" xml:space="preserve"><value>全部来源</value></data>
-  <data name="FilterManualAdded" xml:space="preserve"><value>手动添加</value></data>
-  <data name="StreamsSummaryFormat" xml:space="preserve"><value>当前筛选: {0} · {1} / {2} 个媒体流</value></data>
-  <data name="StreamsSummaryWithKeywordFormat" xml:space="preserve"><value>当前筛选: {0} · 关键字: {1} · {2} / {3} 个媒体流</value></data>
-  <data name="FavouritesSummaryFormat" xml:space="preserve"><value>已喜欢 {0} 个媒体流</value></data>
-  <data name="SubscriptionsSummaryFormat" xml:space="preserve"><value>已添加 {0} 个订阅</value></data>
-  <data name="BusyPleaseWait" xml:space="preserve"><value>请稍候…</value></data>
-  <data name="BusyImportingStreams" xml:space="preserve"><value>正在导入媒体流…</value></data>
-  <data name="BusyUpdatingSubscriptions" xml:space="preserve"><value>正在更新订阅…</value></data>
-  <data name="BusyUpdatingSubscriptionFormat" xml:space="preserve"><value>正在更新订阅 {0}…</value></data>
-  <data name="BusyStoppingParsedFormat" xml:space="preserve"><value>{0} 正在中止… 已解析到 {1} 个媒体源</value></data>
-  <data name="BusyCancelling" xml:space="preserve"><value>正在取消，不会保存任何已完成的媒体源…</value></data>
-  <data name="BusyParsedCountFormat" xml:space="preserve"><value>{0} 已解析到 {1} 个媒体源</value></data>
-  <data name="BusyUpdateFailuresFormat" xml:space="preserve"><value>{0} 个订阅更新失败。首个错误: {1}</value></data>
-  <data name="OriginManualAdded" xml:space="preserve"><value>手动添加</value></data>
-  <data name="OriginSubscription" xml:space="preserve"><value>订阅</value></data>
-  <data name="FavouriteActionRemove" xml:space="preserve"><value>取消喜欢</value></data>
-  <data name="FavouriteActionAdd" xml:space="preserve"><value>标记喜欢</value></data>
-  <data name="SubscriptionLimitsFormat" xml:space="preserve"><value>递归 {0} 层 · 最多 {1} 个媒体流</value></data>
-  <data name="SubscriptionLastUpdatedFormat" xml:space="preserve"><value>上次更新: {0:yyyy-MM-dd HH:mm}</value></data>
-  <data name="SubscriptionLastUpdatedNever" xml:space="preserve"><value>尚未更新</value></data>
-  <data name="ValidationPleaseEnterFieldFormat" xml:space="preserve"><value>请输入{0}。</value></data>
-  <data name="ValidationHttpUrl" xml:space="preserve"><value>地址必须是有效的 http 或 https URL。</value></data>
-  <data name="ValidationHttpOrHttpsOnly" xml:space="preserve"><value>地址必须是 http 或 https。</value></data>
-  <data name="ValidationMaxDepthRange" xml:space="preserve"><value>最大递归层数必须在 0 到 32 之间。</value></data>
-  <data name="ValidationMaxCountRange" xml:space="preserve"><value>最大媒体流数量必须在 1 到 200000 之间。</value></data>
-  <data name="UnnamedStream" xml:space="preserve"><value>未命名媒体流</value></data>
-  <data name="GenericGotIt" xml:space="preserve"><value>知道了</value></data>
-  <data name="GenericCancel" xml:space="preserve"><value>取消</value></data>
-  <data name="GenericDelete" xml:space="preserve"><value>删除</value></data>
-  <data name="GenericYes" xml:space="preserve"><value>是</value></data>
-  <data name="GenericNo" xml:space="preserve"><value>否</value></data>
-  <data name="GenericReset" xml:space="preserve"><value>重置</value></data>
-  <data name="LoadFailedTitle" xml:space="preserve"><value>加载失败</value></data>
-  <data name="UpdateFailedTitle" xml:space="preserve"><value>更新失败</value></data>
-  <data name="AddFailedTitle" xml:space="preserve"><value>添加失败</value></data>
-  <data name="ImportFailedTitle" xml:space="preserve"><value>导入失败</value></data>
-  <data name="EditFailedTitle" xml:space="preserve"><value>修改失败</value></data>
-  <data name="PlaybackFailedTitle" xml:space="preserve"><value>播放失败</value></data>
-  <data name="PlaybackFailedMessage" xml:space="preserve"><value>媒体流无法播放。</value></data>
-  <data name="ActionAddStreamTitle" xml:space="preserve"><value>添加媒体流</value></data>
-  <data name="ActionManualAdd" xml:space="preserve"><value>手动添加</value></data>
-  <data name="ActionImportXspf" xml:space="preserve"><value>导入 XSPF</value></data>
-  <data name="ActionImportZip" xml:space="preserve"><value>导入 ZIP</value></data>
-  <data name="PickXspfTitle" xml:space="preserve"><value>请选择由 VLC 导出的 XSPF 文件</value></data>
-  <data name="PickZipTitle" xml:space="preserve"><value>请选择包含 m3u8 或 txt 的 ZIP 压缩包</value></data>
-  <data name="ActionSubscriptionTitle" xml:space="preserve"><value>订阅操作</value></data>
-  <data name="ActionAddSubscription" xml:space="preserve"><value>添加订阅</value></data>
-  <data name="EditorAddStreamTitle" xml:space="preserve"><value>添加媒体流</value></data>
-  <data name="EditorAddStreamSubtitle" xml:space="preserve"><value>输入名称与网络地址，即可将新的媒体流加入列表。</value></data>
-  <data name="StreamNameLabel" xml:space="preserve"><value>媒体流名称</value></data>
-  <data name="StreamNamePlaceholder" xml:space="preserve"><value>例如：Jazz Radio</value></data>
-  <data name="StreamUrlLabel" xml:space="preserve"><value>媒体流地址</value></data>
-  <data name="StreamUrlPlaceholder" xml:space="preserve"><value>https://example.com/live.m3u8</value></data>
-  <data name="EditorAddStreamSave" xml:space="preserve"><value>添加媒体流</value></data>
-  <data name="EditorFormHint" xml:space="preserve"><value>地址必须是有效的 http/https 地址。支持音频流与 m3u8。</value></data>
-  <data name="EditorAddSubscriptionTitle" xml:space="preserve"><value>添加订阅</value></data>
-  <data name="EditorAddSubscriptionSubtitle" xml:space="preserve"><value>订阅地址可以返回 xspf、m3u8 或 zip，应用会自动解析。</value></data>
-  <data name="EditorAddSubscriptionSave" xml:space="preserve"><value>添加订阅</value></data>
-  <data name="EditorEditSubscriptionTitle" xml:space="preserve"><value>编辑订阅</value></data>
-  <data name="EditorEditSubscriptionSubtitle" xml:space="preserve"><value>修改订阅名称、地址或抓取限制后，会重新拉取该订阅的媒体流。</value></data>
-  <data name="EditorEditSubscriptionSave" xml:space="preserve"><value>保存修改</value></data>
-  <data name="SubscriptionNameLabel" xml:space="preserve"><value>订阅名称</value></data>
-  <data name="SubscriptionNamePlaceholder" xml:space="preserve"><value>例如：我的电台合集</value></data>
-  <data name="SubscriptionUrlLabel" xml:space="preserve"><value>订阅地址</value></data>
-  <data name="SubscriptionUrlPlaceholder" xml:space="preserve"><value>https://example.com/subscription</value></data>
-  <data name="SubscriptionMaxDepthLabel" xml:space="preserve"><value>最大递归层数</value></data>
-  <data name="SubscriptionMaxDepthPlaceholder" xml:space="preserve"><value>例如：6</value></data>
-  <data name="SubscriptionMaxCountLabel" xml:space="preserve"><value>最大媒体流数量</value></data>
-  <data name="SubscriptionMaxCountPlaceholder" xml:space="preserve"><value>例如：1000</value></data>
-  <data name="SubscriptionEditorHint" xml:space="preserve"><value>系统会使用队列解析 m3u/m3u8，并按你设置的递归层数和最大媒体流数量提前停止，避免超大订阅拖垮更新。</value></data>
-  <data name="SubscriptionNameRequired" xml:space="preserve"><value>请输入订阅名称。</value></data>
-  <data name="SubscriptionUrlRequired" xml:space="preserve"><value>请输入订阅地址。</value></data>
-  <data name="FilterDialogTitle" xml:space="preserve"><value>筛选媒体流</value></data>
-  <data name="FilterDialogSubtitle" xml:space="preserve"><value>可以同时按来源与关键字过滤。关键字会匹配标题或 URL。</value></data>
-  <data name="FilterKeywordLabel" xml:space="preserve"><value>关键字</value></data>
-  <data name="FilterKeywordPlaceholder" xml:space="preserve"><value>输入关键字，匹配标题或 URL</value></data>
-  <data name="FilterSourceLabel" xml:space="preserve"><value>媒体流来源</value></data>
-  <data name="FilterSourceHint" xml:space="preserve"><value>选择“全部来源”时，只应用关键字过滤。</value></data>
-  <data name="FilterApply" xml:space="preserve"><value>应用筛选</value></data>
-  <data name="FavouritesEmptyTitle" xml:space="preserve"><value>★ 还没有喜欢的媒体流</value></data>
-  <data name="FavouritesEmptySubtitle" xml:space="preserve"><value>在媒体流页面左滑一个项目，就会出现在这里。</value></data>
-  <data name="StreamsEmptyTitle" xml:space="preserve"><value>♫ 还没有媒体流</value></data>
-  <data name="StreamsEmptySubtitle" xml:space="preserve"><value>点击右上角菜单，手动添加或导入 XSPF / ZIP。</value></data>
-  <data name="SubscriptionsEmptyTitle" xml:space="preserve"><value>☁ 还没有订阅</value></data>
-  <data name="SubscriptionsEmptySubtitle" xml:space="preserve"><value>点击右上角菜单添加订阅地址，应用会自动抓取并解析媒体流。</value></data>
-  <data name="SwipeDelete" xml:space="preserve"><value>删除</value></data>
-  <data name="SwipeUnfavourite" xml:space="preserve"><value>取消喜欢</value></data>
-  <data name="BusyAbortButton" xml:space="preserve"><value>中止</value></data>
-  <data name="BusyCancelButton" xml:space="preserve"><value>取消</value></data>
-  <data name="DeleteStreamConfirmTitle" xml:space="preserve"><value>是否删除此媒体流</value></data>
-  <data name="DeleteStreamConfirmSuppress" xml:space="preserve"><value>是, 并且在接下来的五分钟内不要提醒我</value></data>
-  <data name="DeleteSubscriptionConfirmTitle" xml:space="preserve"><value>删除订阅</value></data>
-  <data name="DeleteSubscriptionConfirmMessageFormat" xml:space="preserve"><value>要删除订阅 “{0}” 以及它带来的媒体流吗？</value></data>
+  <!-- 
+    Microsoft ResX Schema 
+    
+    Version 2.0
+    
+    The primary goals of this format is to allow a simple XML format 
+    that is mostly human readable. The generation and parsing of the 
+    various data types are done through the TypeConverter classes 
+    associated with the data types.
+    
+    Example:
+    
+    ... ado.net/XML headers & schema ...
+    <resheader name="resmimetype">text/microsoft-resx</resheader>
+    <resheader name="version">2.0</resheader>
+    <resheader name="reader">System.Resources.ResXResourceReader, System.Windows.Forms, ...</resheader>
+    <resheader name="writer">System.Resources.ResXResourceWriter, System.Windows.Forms, ...</resheader>
+    <data name="Name1"><value>this is my long string</value><comment>this is a comment</comment></data>
+    <data name="Color1" type="System.Drawing.Color, System.Drawing">Blue</data>
+    <data name="Bitmap1" mimetype="application/x-microsoft.net.object.binary.base64">
+        <value>[base64 mime encoded serialized .NET Framework object]</value>
+    </data>
+    <data name="Icon1" type="System.Drawing.Icon, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
+        <value>[base64 mime encoded string representing a byte array form of the .NET Framework object]</value>
+        <comment>This is a comment</comment>
+    </data>
+                
+    There are any number of "resheader" rows that contain simple 
+    name/value pairs.
+    
+    Each data row contains a name, and value. The row also contains a 
+    type or mimetype. Type corresponds to a .NET class that support 
+    text/value conversion through the TypeConverter architecture. 
+    Classes that don't support this are serialized and stored with the 
+    mimetype set.
+    
+    The mimetype is used for serialized objects, and tells the 
+    ResXResourceReader how to depersist the object. This is currently not 
+    extensible. For a given mimetype the value must be set accordingly:
+    
+    Note - application/x-microsoft.net.object.binary.base64 is the format 
+    that the ResXResourceWriter will generate, however the reader can 
+    read any of the formats listed below.
+    
+    mimetype: application/x-microsoft.net.object.binary.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Binary.BinaryFormatter
+            : and then encoded with base64 encoding.
+    
+    mimetype: application/x-microsoft.net.object.soap.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Soap.SoapFormatter
+            : and then encoded with base64 encoding.
+
+    mimetype: application/x-microsoft.net.object.bytearray.base64
+    value   : The object must be serialized into a byte array 
+            : using a System.ComponentModel.TypeConverter
+            : and then encoded with base64 encoding.
+    -->
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="AppName" xml:space="preserve">
+    <value>网流音</value>
+  </data>
+  <data name="PageTitleFavourites" xml:space="preserve">
+    <value>喜欢</value>
+  </data>
+  <data name="PageTitleStreams" xml:space="preserve">
+    <value>媒体流</value>
+  </data>
+  <data name="PageTitleSubscriptions" xml:space="preserve">
+    <value>订阅</value>
+  </data>
+  <data name="TabFavourites" xml:space="preserve">
+    <value>喜欢</value>
+  </data>
+  <data name="TabStreams" xml:space="preserve">
+    <value>媒体流</value>
+  </data>
+  <data name="TabSubscriptions" xml:space="preserve">
+    <value>订阅</value>
+  </data>
+  <data name="CurrentStreamNoneTitle" xml:space="preserve">
+    <value>尚未选择媒体流</value>
+  </data>
+  <data name="CurrentStreamNoneSubtitle" xml:space="preserve">
+    <value>在“喜欢”或“媒体流”中点按一个项目开始播放</value>
+  </data>
+  <data name="PlaybackPlay" xml:space="preserve">
+    <value>播放</value>
+  </data>
+  <data name="PlaybackStop" xml:space="preserve">
+    <value>停止</value>
+  </data>
+  <data name="FilterAllSources" xml:space="preserve">
+    <value>全部来源</value>
+  </data>
+  <data name="FilterManualAdded" xml:space="preserve">
+    <value>手动添加</value>
+  </data>
+  <data name="StreamsSummaryFormat" xml:space="preserve">
+    <value>当前筛选: {0} · {1} / {2} 个媒体流</value>
+  </data>
+  <data name="StreamsSummaryWithKeywordFormat" xml:space="preserve">
+    <value>当前筛选: {0} · 关键字: {1} · {2} / {3} 个媒体流</value>
+  </data>
+  <data name="FavouritesSummaryFormat" xml:space="preserve">
+    <value>已喜欢 {0} 个媒体流</value>
+  </data>
+  <data name="SubscriptionsSummaryFormat" xml:space="preserve">
+    <value>已添加 {0} 个订阅</value>
+  </data>
+  <data name="BusyPleaseWait" xml:space="preserve">
+    <value>请稍候…</value>
+  </data>
+  <data name="BusyImportingStreams" xml:space="preserve">
+    <value>正在导入媒体流…</value>
+  </data>
+  <data name="BusyUpdatingSubscriptions" xml:space="preserve">
+    <value>正在更新订阅…</value>
+  </data>
+  <data name="BusyUpdatingSubscriptionFormat" xml:space="preserve">
+    <value>正在更新订阅 {0}…</value>
+  </data>
+  <data name="BusyStoppingParsedFormat" xml:space="preserve">
+    <value>{0} 正在中止… 已解析到 {1} 个媒体源</value>
+  </data>
+  <data name="BusyCancelling" xml:space="preserve">
+    <value>正在取消，不会保存任何已完成的媒体源…</value>
+  </data>
+  <data name="BusyParsedCountFormat" xml:space="preserve">
+    <value>{0} 已解析到 {1} 个媒体源</value>
+  </data>
+  <data name="BusyUpdateFailuresFormat" xml:space="preserve">
+    <value>{0} 个订阅更新失败。首个错误: {1}</value>
+  </data>
+  <data name="OriginManualAdded" xml:space="preserve">
+    <value>手动添加</value>
+  </data>
+  <data name="OriginSubscription" xml:space="preserve">
+    <value>订阅</value>
+  </data>
+  <data name="FavouriteActionRemove" xml:space="preserve">
+    <value>取消喜欢</value>
+  </data>
+  <data name="FavouriteActionAdd" xml:space="preserve">
+    <value>标记喜欢</value>
+  </data>
+  <data name="SubscriptionLimitsFormat" xml:space="preserve">
+    <value>递归 {0} 层 · 最多 {1} 个媒体流</value>
+  </data>
+  <data name="SubscriptionLastUpdatedFormat" xml:space="preserve">
+    <value>上次更新: {0:yyyy-MM-dd HH:mm}</value>
+  </data>
+  <data name="SubscriptionLastUpdatedNever" xml:space="preserve">
+    <value>尚未更新</value>
+  </data>
+  <data name="ValidationPleaseEnterFieldFormat" xml:space="preserve">
+    <value>请输入{0}。</value>
+  </data>
+  <data name="ValidationHttpUrl" xml:space="preserve">
+    <value>地址必须是有效的 http 或 https URL。</value>
+  </data>
+  <data name="ValidationHttpOrHttpsOnly" xml:space="preserve">
+    <value>地址必须是 http 或 https。</value>
+  </data>
+  <data name="ValidationMaxDepthRange" xml:space="preserve">
+    <value>最大递归层数必须在 0 到 32 之间。</value>
+  </data>
+  <data name="ValidationMaxCountRange" xml:space="preserve">
+    <value>最大媒体流数量必须在 1 到 200000 之间。</value>
+  </data>
+  <data name="UnnamedStream" xml:space="preserve">
+    <value>未命名媒体流</value>
+  </data>
+  <data name="GenericGotIt" xml:space="preserve">
+    <value>知道了</value>
+  </data>
+  <data name="GenericCancel" xml:space="preserve">
+    <value>取消</value>
+  </data>
+  <data name="GenericDelete" xml:space="preserve">
+    <value>删除</value>
+  </data>
+  <data name="GenericYes" xml:space="preserve">
+    <value>是</value>
+  </data>
+  <data name="GenericNo" xml:space="preserve">
+    <value>否</value>
+  </data>
+  <data name="GenericReset" xml:space="preserve">
+    <value>重置</value>
+  </data>
+  <data name="LoadFailedTitle" xml:space="preserve">
+    <value>加载失败</value>
+  </data>
+  <data name="UpdateFailedTitle" xml:space="preserve">
+    <value>更新失败</value>
+  </data>
+  <data name="AddFailedTitle" xml:space="preserve">
+    <value>添加失败</value>
+  </data>
+  <data name="ImportFailedTitle" xml:space="preserve">
+    <value>导入失败</value>
+  </data>
+  <data name="EditFailedTitle" xml:space="preserve">
+    <value>修改失败</value>
+  </data>
+  <data name="PlaybackFailedTitle" xml:space="preserve">
+    <value>播放失败</value>
+  </data>
+  <data name="PlaybackFailedMessage" xml:space="preserve">
+    <value>媒体流无法播放。</value>
+  </data>
+  <data name="ActionAddStreamTitle" xml:space="preserve">
+    <value>添加媒体流</value>
+  </data>
+  <data name="ActionManualAdd" xml:space="preserve">
+    <value>手动添加</value>
+  </data>
+  <data name="ActionImportXspf" xml:space="preserve">
+    <value>导入 XSPF</value>
+  </data>
+  <data name="ActionImportZip" xml:space="preserve">
+    <value>导入 ZIP</value>
+  </data>
+  <data name="PickXspfTitle" xml:space="preserve">
+    <value>请选择由 VLC 导出的 XSPF 文件</value>
+  </data>
+  <data name="PickZipTitle" xml:space="preserve">
+    <value>请选择包含 m3u8 或 txt 的 ZIP 压缩包</value>
+  </data>
+  <data name="ActionSubscriptionTitle" xml:space="preserve">
+    <value>订阅操作</value>
+  </data>
+  <data name="ActionAddSubscription" xml:space="preserve">
+    <value>添加订阅</value>
+  </data>
+  <data name="EditorAddStreamTitle" xml:space="preserve">
+    <value>添加媒体流</value>
+  </data>
+  <data name="EditorAddStreamSubtitle" xml:space="preserve">
+    <value>输入名称与网络地址，即可将新的媒体流加入列表。</value>
+  </data>
+  <data name="StreamNameLabel" xml:space="preserve">
+    <value>媒体流名称</value>
+  </data>
+  <data name="StreamNamePlaceholder" xml:space="preserve">
+    <value>例如：Jazz Radio</value>
+  </data>
+  <data name="StreamUrlLabel" xml:space="preserve">
+    <value>媒体流地址</value>
+  </data>
+  <data name="StreamUrlPlaceholder" xml:space="preserve">
+    <value>https://example.com/live.m3u8</value>
+  </data>
+  <data name="EditorAddStreamSave" xml:space="preserve">
+    <value>添加媒体流</value>
+  </data>
+  <data name="EditorFormHint" xml:space="preserve">
+    <value>地址必须是有效的 http/https 地址。支持音频流与 m3u8。</value>
+  </data>
+  <data name="EditorAddSubscriptionTitle" xml:space="preserve">
+    <value>添加订阅</value>
+  </data>
+  <data name="EditorAddSubscriptionSubtitle" xml:space="preserve">
+    <value>订阅地址可以返回 xspf、m3u8 或 zip，应用会自动解析。</value>
+  </data>
+  <data name="EditorAddSubscriptionSave" xml:space="preserve">
+    <value>添加订阅</value>
+  </data>
+  <data name="EditorEditSubscriptionTitle" xml:space="preserve">
+    <value>编辑订阅</value>
+  </data>
+  <data name="EditorEditSubscriptionSubtitle" xml:space="preserve">
+    <value>修改订阅名称、地址或抓取限制后，会重新拉取该订阅的媒体流。</value>
+  </data>
+  <data name="EditorEditSubscriptionSave" xml:space="preserve">
+    <value>保存修改</value>
+  </data>
+  <data name="SubscriptionNameLabel" xml:space="preserve">
+    <value>订阅名称</value>
+  </data>
+  <data name="SubscriptionNamePlaceholder" xml:space="preserve">
+    <value>例如：我的电台合集</value>
+  </data>
+  <data name="SubscriptionUrlLabel" xml:space="preserve">
+    <value>订阅地址</value>
+  </data>
+  <data name="SubscriptionUrlPlaceholder" xml:space="preserve">
+    <value>https://example.com/subscription</value>
+  </data>
+  <data name="SubscriptionMaxDepthLabel" xml:space="preserve">
+    <value>最大递归层数</value>
+  </data>
+  <data name="SubscriptionMaxDepthPlaceholder" xml:space="preserve">
+    <value>例如：6</value>
+  </data>
+  <data name="SubscriptionMaxCountLabel" xml:space="preserve">
+    <value>最大媒体流数量</value>
+  </data>
+  <data name="SubscriptionMaxCountPlaceholder" xml:space="preserve">
+    <value>例如：1000</value>
+  </data>
+  <data name="SubscriptionEditorHint" xml:space="preserve">
+    <value>系统会使用队列解析 m3u/m3u8，并按你设置的递归层数和最大媒体流数量提前停止，避免超大订阅拖垮更新。</value>
+  </data>
+  <data name="SubscriptionNameRequired" xml:space="preserve">
+    <value>请输入订阅名称。</value>
+  </data>
+  <data name="SubscriptionUrlRequired" xml:space="preserve">
+    <value>请输入订阅地址。</value>
+  </data>
+  <data name="FilterDialogTitle" xml:space="preserve">
+    <value>筛选媒体流</value>
+  </data>
+  <data name="FilterDialogSubtitle" xml:space="preserve">
+    <value>可以同时按来源与关键字过滤。关键字会匹配标题或 URL。</value>
+  </data>
+  <data name="FilterKeywordLabel" xml:space="preserve">
+    <value>关键字</value>
+  </data>
+  <data name="FilterKeywordPlaceholder" xml:space="preserve">
+    <value>输入关键字，匹配标题或 URL</value>
+  </data>
+  <data name="FilterSourceLabel" xml:space="preserve">
+    <value>媒体流来源</value>
+  </data>
+  <data name="FilterSourceHint" xml:space="preserve">
+    <value>选择“全部来源”时，只应用关键字过滤。</value>
+  </data>
+  <data name="FilterApply" xml:space="preserve">
+    <value>应用筛选</value>
+  </data>
+  <data name="FavouritesEmptyTitle" xml:space="preserve">
+    <value>★ 还没有喜欢的媒体流</value>
+  </data>
+  <data name="FavouritesEmptySubtitle" xml:space="preserve">
+    <value>在媒体流页面左滑一个项目，就会出现在这里。</value>
+  </data>
+  <data name="StreamsEmptyTitle" xml:space="preserve">
+    <value>♫ 还没有媒体流</value>
+  </data>
+  <data name="StreamsEmptySubtitle" xml:space="preserve">
+    <value>点击右上角菜单，手动添加或导入 XSPF / ZIP。</value>
+  </data>
+  <data name="SubscriptionsEmptyTitle" xml:space="preserve">
+    <value>☁ 还没有订阅</value>
+  </data>
+  <data name="SubscriptionsEmptySubtitle" xml:space="preserve">
+    <value>点击右上角菜单添加订阅地址，应用会自动抓取并解析媒体流。</value>
+  </data>
+  <data name="SwipeDelete" xml:space="preserve">
+    <value>删除</value>
+  </data>
+  <data name="SwipeUnfavourite" xml:space="preserve">
+    <value>取消喜欢</value>
+  </data>
+  <data name="BusyAbortButton" xml:space="preserve">
+    <value>中止</value>
+  </data>
+  <data name="BusyCancelButton" xml:space="preserve">
+    <value>取消</value>
+  </data>
+  <data name="DeleteStreamConfirmTitle" xml:space="preserve">
+    <value>是否删除此媒体流</value>
+  </data>
+  <data name="DeleteStreamConfirmSuppress" xml:space="preserve">
+    <value>是, 并且在接下来的五分钟内不要提醒我</value>
+  </data>
+  <data name="DeleteSubscriptionConfirmTitle" xml:space="preserve">
+    <value>删除订阅</value>
+  </data>
+  <data name="DeleteSubscriptionConfirmMessageFormat" xml:space="preserve">
+    <value>要删除订阅 “{0}” 以及它带来的媒体流吗？</value>
+  </data>
 </root>

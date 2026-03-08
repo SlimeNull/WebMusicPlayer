@@ -473,7 +473,11 @@ public sealed partial class MainViewModel(AppStateStore appStateStore, StreamImp
     {
         var progress = new Progress<int>(count => ReportSubscriptionProgress(subscription, count));
         var candidates = await Task.Run(
-            () => _streamImportService.ParseFromAddressAsync(subscription.Url, subscription.GetImportOptions(), progress, IsBusyOperationAbortRequested, cancellationToken),
+            async () =>
+            {
+                var parsed = await _streamImportService.ParseFromAddressAsync(subscription.Url, subscription.GetImportOptions(), progress, IsBusyOperationAbortRequested, cancellationToken);
+                return await _streamImportService.ResolveInvalidStreamNamesAsync(parsed, cancellationToken);
+            },
             cancellationToken);
 
         return new SubscriptionRefreshSnapshot(subscription, candidates, null, true);

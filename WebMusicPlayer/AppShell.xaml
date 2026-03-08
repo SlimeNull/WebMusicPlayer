@@ -3,7 +3,9 @@
     x:Class="WebMusicPlayer.AppShell"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-    xmlns:loc="clr-namespace:WebMusicPlayer.Localization"
-    Title="{loc:Translate AppName}">
+    xmlns:v="clr-namespace:WebMusicPlayer.Views"
+    xmlns:loc="clr-namespace:WebMusicPlayer.Localization">
 
+    <ShellContent ContentTemplate="{DataTemplate v:MainPage}"
+                  Shell.NavBarIsVisible="False"/>
 </Shell>

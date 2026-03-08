@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using CommunityToolkit.Maui.Core;
 using WebMusicPlayer.Localization;
 using WebMusicPlayer.Models;
@@ -9,6 +10,7 @@ public partial class MainPage : ContentPage
 {
     private readonly MainViewModel _viewModel;
     private bool _isInitialized;
+    private StreamItem? _metadataStream;
 
     public MainPage(MainViewModel viewModel)
     {
@@ -173,6 +175,8 @@ public partial class MainPage : ContentPage
     {
         MainThread.BeginInvokeOnMainThread(() =>
         {
+            SetMetadataStream(stream);
+            ApplyPlayerMetadata(stream);
             Player.Source = stream.Url;
             Player.Play();
             _viewModel.SetPlaybackState(true);
@@ -184,6 +188,7 @@ public partial class MainPage : ContentPage
         MainThread.BeginInvokeOnMainThread(() =>
         {
             Player.Stop();
+            ClearPlayerMetadata();
             _viewModel.SetPlaybackState(false);
         });
     }
@@ -195,12 +200,63 @@ public partial class MainPage : ContentPage
 
     private void OnPlayerMediaEnded(object? sender, EventArgs e)
     {
+        ClearPlayerMetadata();
         _viewModel.SetPlaybackState(false);
     }
 
     private async void OnPlayerMediaFailed(object? sender, MediaFailedEventArgs e)
     {
+        ClearPlayerMetadata();
         _viewModel.SetPlaybackState(false);
         await DisplayAlertAsync(TranslateExtension.Get("PlaybackFailedTitle"), e.ErrorMessage ?? TranslateExtension.Get("PlaybackFailedMessage"), TranslateExtension.Get("GenericGotIt"));
+    }
+
+    private void SetMetadataStream(StreamItem stream)
+    {
+        if (ReferenceEquals(_metadataStream, stream))
+        {
+            return;
+        }
+
+        if (_metadataStream is not null)
+        {
+            _metadataStream.PropertyChanged -= OnMetadataStreamPropertyChanged;
+        }
+
+        _metadataStream = stream;
+        _metadataStream.PropertyChanged += OnMetadataStreamPropertyChanged;
+    }
+
+    private void OnMetadataStreamPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (sender is not StreamItem stream)
+        {
+            return;
+        }
+
+        if (e.PropertyName is nameof(StreamItem.Name) or nameof(StreamItem.OriginLabel))
+        {
+            MainThread.BeginInvokeOnMainThread(() => ApplyPlayerMetadata(stream));
+        }
+    }
+
+    private void ApplyPlayerMetadata(StreamItem stream)
+    {
+        Player.MetadataTitle = stream.Name;
+        Player.MetadataArtist = stream.OriginLabel;
+        Player.MetadataArtworkUrl = string.Empty;
+    }
+
+    private void ClearPlayerMetadata()
+    {
+        if (_metadataStream is not null)
+        {
+            _metadataStream.PropertyChanged -= OnMetadataStreamPropertyChanged;
+            _metadataStream = null;
+        }
+
+        Player.MetadataTitle = string.Empty;
+        Player.MetadataArtist = string.Empty;
+        Player.MetadataArtworkUrl = string.Empty;
     }
 }

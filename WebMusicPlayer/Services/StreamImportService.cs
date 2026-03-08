@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using System.IO.Compression;
+using System.Text.RegularExpressions;
 using System.Text;
 using System.Xml.Linq;
 using WebMusicPlayer.Localization;
@@ -11,8 +12,78 @@ public sealed class StreamImportService(HttpClient httpClient)
 {
     private static readonly string[] PlaylistExtensions = [".m3u8", ".m3u"];
     private static readonly string[] DirectMediaContentTypePrefixes = ["audio/", "video/"];
+    private static readonly string[] InvalidStreamNames = ["playlist", "stream", "listen", "live", "audio", "default", "mount", "radio", "hls", "aac", "mp3", "ogg", "opus"];
+    private static readonly Regex BitrateOnlyNameRegex = new(@"^\d+\s*(kbps|k|mbps)(\s+[a-z0-9]+)?$", RegexOptions.IgnoreCase | RegexOptions.Compiled);
     private static readonly SubscriptionImportOptions ManualImportOptions = new(32, 200000, 4);
     private readonly HttpClient _httpClient = httpClient;
+
+    public async Task<IReadOnlyList<ImportStreamCandidate>> ResolveInvalidStreamNamesAsync(
+        IReadOnlyList<ImportStreamCandidate> candidates,
+        CancellationToken cancellationToken = default)
+    {
+        if (candidates.Count == 0)
+        {
+            return candidates;
+        }
+
+        var resolved = new ImportStreamCandidate[candidates.Count];
+        var throttler = new SemaphoreSlim(4);
+        var tasks = candidates.Select(async (candidate, index) =>
+        {
+            if (!IsInvalidStreamName(candidate.Name))
+            {
+                resolved[index] = candidate;
+                return;
+            }
+
+            await throttler.WaitAsync(cancellationToken);
+            try
+            {
+                var icyName = await TryGetIcyNameAsync(candidate.Url, cancellationToken);
+                resolved[index] = !string.IsNullOrWhiteSpace(icyName) && !IsInvalidStreamName(icyName)
+                    ? candidate with { Name = icyName.Trim() }
+                    : candidate;
+            }
+            catch
+            {
+                resolved[index] = candidate;
+            }
+            finally
+            {
+                throttler.Release();
+            }
+        });
+
+        await Task.WhenAll(tasks);
+        return resolved;
+    }
+
+    public async Task<string?> TryGetIcyNameAsync(string address, CancellationToken cancellationToken = default)
+    {
+        if (!Uri.TryCreate(address, UriKind.Absolute, out var uri)
+            || (uri.Scheme != Uri.UriSchemeHttp && uri.Scheme != Uri.UriSchemeHttps))
+        {
+            return null;
+        }
+
+        using var request = new HttpRequestMessage(HttpMethod.Get, uri);
+        request.Headers.TryAddWithoutValidation("Icy-MetaData", "1");
+
+        using var response = await _httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
+        response.EnsureSuccessStatusCode();
+
+        if (TryReadHeaderValue(response.Headers, "icy-name", out var icyName))
+        {
+            return icyName;
+        }
+
+        if (TryReadHeaderValue(response.Content.Headers, "icy-name", out icyName))
+        {
+            return icyName;
+        }
+
+        return null;
+    }
 
     public async Task<IReadOnlyList<ImportStreamCandidate>> ParseFromFileAsync(string fileName, Stream stream, CancellationToken cancellationToken = default)
     {
@@ -442,6 +513,47 @@ public sealed class StreamImportService(HttpClient httpClient)
         }
 
         return uri.Host;
+    }
+
+    private static bool IsInvalidStreamName(string? name)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            return true;
+        }
+
+        var trimmed = name.Trim();
+        var normalized = Path.GetFileNameWithoutExtension(trimmed)
+            .Trim()
+            .Replace('_', ' ')
+            .Replace('-', ' ')
+            .ToLowerInvariant();
+
+        if (BitrateOnlyNameRegex.IsMatch(normalized))
+        {
+            return true;
+        }
+
+        if (InvalidStreamNames.Contains(normalized, StringComparer.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
+        return normalized.StartsWith("playlist", StringComparison.OrdinalIgnoreCase)
+            || normalized.StartsWith("stream", StringComparison.OrdinalIgnoreCase)
+            || normalized.StartsWith("listen", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static bool TryReadHeaderValue(System.Net.Http.Headers.HttpHeaders headers, string name, out string value)
+    {
+        if (headers.TryGetValues(name, out var values))
+        {
+            value = values.FirstOrDefault(static x => !string.IsNullOrWhiteSpace(x))?.Trim() ?? string.Empty;
+            return !string.IsNullOrWhiteSpace(value);
+        }
+
+        value = string.Empty;
+        return false;
     }
 
     private static string? ExtractQuotedAttribute(string directive, string attributeName)

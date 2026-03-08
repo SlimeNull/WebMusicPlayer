@@ -1,4 +1,7 @@
-# WebMusicPlayer
+<div align="center">
+    <img src="assets/appicon-full-01.png" width="150">
+    <h1>WebMusicPlayer</h1>
+</div>
 
 一个基于 .NET MAUI 的跨平台网络音频播放器，用于管理、筛选、收藏、播放网络媒体流，并支持通过订阅地址批量导入电台/流媒体列表。
 
@@ -21,6 +24,14 @@
   - 播放时优先使用媒体流自己的 `ArtworkUrl`
   - 若未提供封面，则回退到应用内默认封面
 - 中英文本地化
+
+## 截图
+
+<div>
+<img src="assets/snapshot-favs.jpg" width="200">
+<img src="assets/snapshot-streams.jpg" width="200">
+<img src="assets/snapshot-subs.jpg" width="200">
+</div>
 
 ## 当前订阅导入规则
 

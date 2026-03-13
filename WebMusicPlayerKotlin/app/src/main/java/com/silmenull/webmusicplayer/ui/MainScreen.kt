@@ -91,6 +91,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import coil.compose.SubcomposeAsyncImage
+import coil.request.ImageRequest
 import com.silmenull.webmusicplayer.R
 import com.silmenull.webmusicplayer.models.AppTab
 import com.silmenull.webmusicplayer.models.FilterOption
@@ -104,6 +106,8 @@ import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.Locale
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 
 private enum class ImportMenuAction {
     XSPF,
@@ -1051,6 +1055,7 @@ private fun NowPlayingCard(
     currentStream: StreamItem?,
     onTogglePlayback: () -> Unit,
 ) {
+    val context = LocalContext.current
     Surface(
         shape = RoundedCornerShape(24.dp),
         color = MaterialTheme.colorScheme.surface,
@@ -1077,11 +1082,19 @@ private fun NowPlayingCard(
                     ),
                 contentAlignment = Alignment.Center,
             ) {
-                Icon(
-                    imageVector = if (uiState.isPlaying) Icons.Filled.LibraryMusic else Icons.Filled.PlayArrow,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onPrimary,
-                )
+                NowPlayingArtworkFallback(uiState.isPlaying)
+                val artworkUrl = currentStream?.artworkUrl?.takeIf { it.isNotBlank() }
+                if (artworkUrl != null) {
+                    SubcomposeAsyncImage(
+                        model = ImageRequest.Builder(context)
+                            .data(artworkUrl)
+                            .crossfade(true)
+                            .build(),
+                        contentDescription = null,
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier.matchParentSize()
+                    )
+                }
             }
             Spacer(modifier = Modifier.width(8.dp))
             Column(modifier = Modifier.weight(1f)) {
@@ -1143,6 +1156,15 @@ private fun NowPlayingCard(
             }
         }
     }
+}
+
+@Composable
+private fun NowPlayingArtworkFallback(isPlaying: Boolean) {
+    Icon(
+        imageVector = if (isPlaying) Icons.Filled.LibraryMusic else Icons.Filled.PlayArrow,
+        contentDescription = null,
+        tint = MaterialTheme.colorScheme.onPrimary,
+    )
 }
 
 @Composable

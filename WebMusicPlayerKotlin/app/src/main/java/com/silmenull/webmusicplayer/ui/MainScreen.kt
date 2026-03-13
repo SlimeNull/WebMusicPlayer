@@ -102,6 +102,7 @@ import com.silmenull.webmusicplayer.models.SubscriptionItem
 import com.silmenull.webmusicplayer.viewmodel.MainUiState
 import com.silmenull.webmusicplayer.viewmodel.MainViewModel
 import kotlinx.coroutines.launch
+import java.net.URI
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
@@ -133,6 +134,11 @@ private data class SubscriptionFormState(
     val maxStreamCount: String = "1000",
 )
 
+private data class SubscriptionFormErrors(
+    val url: String? = null,
+    val maxStreamCount: String? = null,
+)
+
 @Composable
 fun WebMusicPlayerRoute(
     viewModel: MainViewModel,
@@ -150,6 +156,8 @@ fun WebMusicPlayerRoute(
     val editSubscriptionTitle = stringResource(R.string.editor_edit_subscription_title)
     val editSubscriptionSubtitle = stringResource(R.string.editor_edit_subscription_subtitle)
     val editSubscriptionSave = stringResource(R.string.editor_edit_subscription_save)
+    val validationHttpUrl = stringResource(R.string.validation_http_url)
+    val validationMaxCountRange = stringResource(R.string.validation_max_count_range)
     val availableFilters = remember(uiState.subscriptions) {
         listOf(
             FilterOption(FilterOption.ALL_KEY, "all"),
@@ -373,6 +381,17 @@ fun WebMusicPlayerRoute(
             initial = formState,
             onDismiss = { subscriptionFormState = null },
             onSubmit = { name, url, maxStreamCount ->
+                val errors = validateSubscriptionForm(
+                    url = url,
+                    maxStreamCount = maxStreamCount,
+                    invalidUrlMessage = validationHttpUrl,
+                    invalidMaxCountMessage = validationMaxCountRange,
+                )
+                if (errors != null) {
+                    return@SubscriptionEditorDialog errors
+                }
+
+                subscriptionFormState = null
                 scope.launch {
                     runCatching {
                         if (formState.subscriptionId == null) {
@@ -385,12 +404,12 @@ fun WebMusicPlayerRoute(
                                 maxStreamCount
                             )
                         }
-                    }.onSuccess {
-                        subscriptionFormState = null
                     }.onFailure {
                         snackbarHostState.showSnackbar(it.message ?: "")
                     }
                 }
+
+                null
             },
         )
     }
@@ -780,7 +799,7 @@ private fun StreamRow(
     SwipeToDismissBox(
         state = dismissState,
         backgroundContent = {
-            Box(modifier = Modifier.fillMaxSize()) {
+            Box(modifier = Modifier.fillMaxSize().padding(8.dp, 0.dp)) {
                 when (dismissState.dismissDirection) {
                     SwipeToDismissBoxValue.StartToEnd -> {
                         if (!startActionLabel.isEmpty()) {
@@ -863,12 +882,16 @@ private fun StreamCard(
                             .clip(RoundedCornerShape(10.dp))
                             .background(MaterialTheme.colorScheme.primary),
                     )
+                    Spacer(modifier = Modifier.width(12.dp))
+                } else {
+                    Spacer(modifier = Modifier.width(16.dp))
                 }
             }
+
             Column(
                 modifier = Modifier
                     .weight(1f)
-                    .padding(start = 16.dp, end = 12.dp),
+                    .padding(start = 0.dp, end = 12.dp),
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
@@ -1338,21 +1361,25 @@ private fun StreamEditorDialog(
 private fun SubscriptionEditorDialog(
     initial: SubscriptionFormState,
     onDismiss: () -> Unit,
-    onSubmit: (String, String, Int) -> Unit,
+    onSubmit: (String, String, Int) -> SubscriptionFormErrors?,
 ) {
     var name by remember(initial) { mutableStateOf(initial.name) }
     var url by remember(initial) { mutableStateOf(initial.url) }
     var maxStreamCount by remember(initial) { mutableStateOf(initial.maxStreamCount) }
+    var urlError by remember(initial) { mutableStateOf<String?>(null) }
+    var maxStreamCountError by remember(initial) { mutableStateOf<String?>(null) }
 
     AlertDialog(
         onDismissRequest = onDismiss,
         confirmButton = {
             TextButton(onClick = {
-                onSubmit(
+                val errors = onSubmit(
                     name.trim(),
                     url.trim(),
                     maxStreamCount.trim().toIntOrNull() ?: -1
                 )
+                urlError = errors?.url
+                maxStreamCountError = errors?.maxStreamCount
             }) {
                 Text(initial.saveLabel)
             }
@@ -1385,19 +1412,33 @@ private fun SubscriptionEditorDialog(
                 )
                 OutlinedTextField(
                     value = url,
-                    onValueChange = { url = it },
+                    onValueChange = {
+                        url = it
+                        urlError = null
+                    },
                     label = { Text(stringResource(R.string.subscription_url_label)) },
                     placeholder = { Text(stringResource(R.string.subscription_url_placeholder)) },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
+                    isError = urlError != null,
+                    supportingText = {
+                        urlError?.let { Text(it) }
+                    },
                 )
                 OutlinedTextField(
                     value = maxStreamCount,
-                    onValueChange = { maxStreamCount = it.filter(Char::isDigit) },
+                    onValueChange = {
+                        maxStreamCount = it.filter(Char::isDigit)
+                        maxStreamCountError = null
+                    },
                     label = { Text(stringResource(R.string.subscription_max_count_label)) },
                     placeholder = { Text(stringResource(R.string.subscription_max_count_placeholder)) },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
+                    isError = maxStreamCountError != null,
+                    supportingText = {
+                        maxStreamCountError?.let { Text(it) }
+                    },
                 )
                 Text(
                     text = stringResource(R.string.subscription_editor_hint),
@@ -1469,6 +1510,38 @@ private fun ConfirmDialog(
         text = { Text(message) },
         shape = RoundedCornerShape(24.dp),
     )
+}
+
+private fun validateSubscriptionForm(
+    url: String,
+    maxStreamCount: Int,
+    invalidUrlMessage: String,
+    invalidMaxCountMessage: String,
+): SubscriptionFormErrors? {
+    val normalizedUrl = url.trim()
+    val uri = runCatching { URI(normalizedUrl) }.getOrNull()
+    val urlError = if (
+        uri == null ||
+        !(uri.scheme.equals("http", ignoreCase = true) || uri.scheme.equals("https", ignoreCase = true))
+    ) {
+        invalidUrlMessage
+    } else {
+        null
+    }
+    val maxStreamCountError = if (maxStreamCount !in 1..200000) {
+        invalidMaxCountMessage
+    } else {
+        null
+    }
+
+    return if (urlError != null || maxStreamCountError != null) {
+        SubscriptionFormErrors(
+            url = urlError,
+            maxStreamCount = maxStreamCountError,
+        )
+    } else {
+        null
+    }
 }
 
 @Composable

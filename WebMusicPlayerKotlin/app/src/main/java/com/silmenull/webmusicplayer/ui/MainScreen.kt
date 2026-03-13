@@ -1060,7 +1060,7 @@ private fun NowPlayingCard(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp),
+                .padding(8.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Box(
@@ -1083,7 +1083,7 @@ private fun NowPlayingCard(
                     tint = MaterialTheme.colorScheme.onPrimary,
                 )
             }
-            Spacer(modifier = Modifier.width(14.dp))
+            Spacer(modifier = Modifier.width(8.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = currentStream?.name
@@ -1123,6 +1123,7 @@ private fun NowPlayingCard(
                     }
                 }
             }
+            Spacer(modifier = Modifier.width(8.dp))
             Surface(
                 shape = RoundedCornerShape(16.dp),
                 color = MaterialTheme.colorScheme.primary,

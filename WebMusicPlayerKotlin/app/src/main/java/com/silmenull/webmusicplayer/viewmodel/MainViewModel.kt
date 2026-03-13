@@ -12,6 +12,7 @@ import androidx.media3.common.MediaMetadata
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.session.MediaSession
 import com.silmenull.webmusicplayer.R
 import com.silmenull.webmusicplayer.data.AppStateStore
 import com.silmenull.webmusicplayer.data.StreamImportService
@@ -45,6 +46,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val appStateStore = AppStateStore(application)
     private val streamImportService = StreamImportService()
     private val player = ExoPlayer.Builder(application).build()
+    private val session = MediaSession.Builder(application, player).build()
     private val eventMessages = MutableSharedFlow<String>()
     private val uiStateFlow = MutableStateFlow(
         MainUiState(
@@ -586,7 +588,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     private fun validateMaxStreamCount(value: Int): Int {
-        if (value <= 0 || value > 200000) {
+        if (value !in 1..200000) {
             throw IllegalArgumentException(text(R.string.validation_max_count_range))
         }
         return value
@@ -599,7 +601,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         return runCatching {
             val uri = URI(address)
             val tail = Path.of(uri.path ?: "").fileName?.toString().orEmpty()
-            if (tail.isNotBlank()) tail else uri.host.orEmpty()
+            tail.ifBlank { uri.host.orEmpty() }
         }.getOrDefault(text(R.string.unnamed_stream)).ifBlank { text(R.string.unnamed_stream) }
     }
 

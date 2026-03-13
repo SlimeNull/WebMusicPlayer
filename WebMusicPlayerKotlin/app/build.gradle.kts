@@ -13,7 +13,7 @@ android {
 
     defaultConfig {
         applicationId = "com.silmenull.webmusicplayer"
-        minSdk = 29
+        minSdk = 34
         targetSdk = 36
         versionCode = 1
         versionName = "1.0"
@@ -51,6 +51,7 @@ dependencies {
     implementation(libs.androidx.compose.material.icons.extended)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.androidx.media3.exoplayer)
+    implementation(libs.androidx.media3.session)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

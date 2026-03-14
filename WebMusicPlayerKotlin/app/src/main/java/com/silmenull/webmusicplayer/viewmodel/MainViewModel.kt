@@ -1,18 +1,21 @@
 package com.silmenull.webmusicplayer.viewmodel
 
 import android.app.Application
+import android.content.ComponentName
 import android.database.Cursor
 import android.net.Uri
 import android.provider.OpenableColumns
 import androidx.annotation.StringRes
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
-import androidx.media3.exoplayer.ExoPlayer
-import androidx.media3.session.MediaSession
+import androidx.media3.session.MediaController
+import androidx.media3.session.SessionToken
+import com.google.common.util.concurrent.ListenableFuture
 import com.silmenull.webmusicplayer.R
 import com.silmenull.webmusicplayer.data.AppStateStore
 import com.silmenull.webmusicplayer.data.StreamImportService
@@ -24,10 +27,12 @@ import com.silmenull.webmusicplayer.models.StreamItem
 import com.silmenull.webmusicplayer.models.StreamOriginKind
 import com.silmenull.webmusicplayer.models.SubscriptionImportOptions
 import com.silmenull.webmusicplayer.models.SubscriptionItem
+import com.silmenull.webmusicplayer.playback.PlaybackService
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -41,12 +46,12 @@ import java.net.URI
 import java.nio.file.Path
 import java.time.Instant
 import java.util.Locale
+import kotlin.coroutines.resume
+import kotlin.coroutines.resumeWithException
 
 class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val appStateStore = AppStateStore(application)
     private val streamImportService = StreamImportService()
-    private val player = ExoPlayer.Builder(application).build()
-    private val session = MediaSession.Builder(application, player).build()
     private val eventMessages = MutableSharedFlow<String>()
     private val uiStateFlow = MutableStateFlow(
         MainUiState(
@@ -59,47 +64,54 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private var busyBaseText = text(R.string.busy_please_wait)
     private var busyJob: Job? = null
     private val subscriptionProgressById = linkedMapOf<String, Int>()
+    private var controller: MediaController? = null
+    private var controllerFuture: ListenableFuture<MediaController>? = null
     @Volatile
     private var busyOperationAbortRequested = false
 
+    private val playbackListener = object : Player.Listener {
+        override fun onIsPlayingChanged(isPlaying: Boolean) {
+            syncPlaybackState()
+        }
+
+        override fun onPlaybackStateChanged(playbackState: Int) {
+            val activeController = controller
+            val isLoading = playbackState == Player.STATE_BUFFERING
+            val shouldStop = playbackState == Player.STATE_ENDED
+            uiStateFlow.update {
+                it.copy(
+                    currentStreamId = activeController
+                        ?.currentMediaItem
+                        ?.mediaId
+                        ?.takeIf { mediaId -> mediaId.isNotBlank() }
+                        ?: it.currentStreamId,
+                    isLoading = isLoading,
+                    isPlaying = when (playbackState) {
+                        Player.STATE_READY -> activeController?.isPlaying == true
+                        Player.STATE_ENDED,
+                        Player.STATE_IDLE -> false
+                        else -> it.isPlaying
+                    },
+                )
+            }
+            if (shouldStop) {
+                uiStateFlow.update { it.copy(isPlaying = false, isLoading = false) }
+            }
+        }
+
+        override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
+            syncPlaybackState()
+        }
+
+        override fun onPlayerError(error: PlaybackException) {
+            viewModelScope.launch {
+                emitPlaybackError(error)
+            }
+        }
+    }
+
     val uiState: StateFlow<MainUiState> = uiStateFlow.asStateFlow()
     val events: SharedFlow<String> = eventMessages.asSharedFlow()
-
-    init {
-        player.addListener(
-            object : Player.Listener {
-                override fun onIsPlayingChanged(isPlaying: Boolean) {
-                    uiStateFlow.update { it.copy(isPlaying = isPlaying) }
-                }
-
-                override fun onPlaybackStateChanged(playbackState: Int) {
-                    val isLoading = playbackState == Player.STATE_BUFFERING
-                    val shouldStop = playbackState == Player.STATE_ENDED
-                    uiStateFlow.update {
-                        it.copy(
-                            isLoading = isLoading,
-                            isPlaying = when (playbackState) {
-                                Player.STATE_READY -> player.isPlaying
-                                Player.STATE_ENDED,
-                                Player.STATE_IDLE -> false
-                                else -> it.isPlaying
-                            },
-                        )
-                    }
-                    if (shouldStop) {
-                        uiStateFlow.update { it.copy(isPlaying = false, isLoading = false) }
-                    }
-                }
-
-                override fun onPlayerError(error: PlaybackException) {
-                    uiStateFlow.update { it.copy(isPlaying = false, isLoading = false) }
-                    viewModelScope.launch {
-                        eventMessages.emit(error.localizedMessage ?: text(R.string.playback_failed_message))
-                    }
-                }
-            }
-        )
-    }
 
     suspend fun initialize() {
         if (isInitialized) {
@@ -108,6 +120,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
         appState = appStateStore.load().normalize()
         publishState()
+        ensureControllerConnected()
         isInitialized = true
     }
 
@@ -117,30 +130,38 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     fun playStream(streamId: String) {
         val stream = appState.streams.firstOrNull { it.id == streamId } ?: return
-        uiStateFlow.update { it.copy(currentStreamId = streamId, isLoading = true) }
-        val metadataBuilder = MediaMetadata.Builder().setTitle(stream.name)
-        stream.artworkUrl?.takeIf { it.isNotBlank() }?.let { artwork ->
-            runCatching { metadataBuilder.setArtworkUri(Uri.parse(artwork)) }
+        viewModelScope.launch {
+            runCatching {
+                startPlayback(stream)
+            }.onFailure {
+                emitPlaybackError(it)
+            }
         }
-        player.setMediaItem(
-            MediaItem.Builder()
-                .setUri(stream.url)
-                .setMediaMetadata(metadataBuilder.build())
-                .build()
-        )
-        player.prepare()
-        player.playWhenReady = true
     }
 
     fun togglePlayback() {
         val currentStream = currentStream() ?: return
-        if (uiStateFlow.value.isPlaying) {
-            player.stop()
-            uiStateFlow.update { it.copy(isPlaying = false, isLoading = false) }
-            return
-        }
+        viewModelScope.launch {
+            runCatching {
+                val activeController = ensureControllerConnected()
+                if (activeController.isPlaying) {
+                    activeController.stop()
+                    uiStateFlow.update { it.copy(isPlaying = false, isLoading = false) }
+                    return@runCatching
+                }
 
-        playStream(currentStream.id)
+                val activeMediaId = activeController.currentMediaItem?.mediaId
+                if (activeMediaId == currentStream.id) {
+                    uiStateFlow.update { it.copy(currentStreamId = currentStream.id, isLoading = true) }
+                    activeController.prepare()
+                    activeController.play()
+                } else {
+                    startPlayback(currentStream, activeController)
+                }
+            }.onFailure {
+                emitPlaybackError(it)
+            }
+        }
     }
 
     suspend fun applyFilter(key: String, keyword: String?) {
@@ -552,12 +573,87 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     private fun currentStream(): StreamItem? = getStream(uiStateFlow.value.currentStreamId)
 
+    private suspend fun ensureControllerConnected(): MediaController {
+        controller?.let { return it }
+
+        val application = getApplication<Application>()
+        val future = controllerFuture ?: MediaController.Builder(
+            application,
+            SessionToken(application, ComponentName(application, PlaybackService::class.java))
+        ).buildAsync().also {
+            controllerFuture = it
+        }
+
+        val activeController = try {
+            future.awaitController(application)
+        } catch (error: Exception) {
+            if (controllerFuture === future) {
+                controllerFuture = null
+            }
+            throw error
+        }
+
+        if (controller !== activeController) {
+            controller = activeController
+            activeController.addListener(playbackListener)
+            syncPlaybackState()
+        }
+
+        return activeController
+    }
+
+    private suspend fun startPlayback(
+        stream: StreamItem,
+        activeController: MediaController? = null,
+    ) {
+        val resolvedController = activeController ?: ensureControllerConnected()
+        uiStateFlow.update { it.copy(currentStreamId = stream.id, isLoading = true) }
+        val metadataBuilder = MediaMetadata.Builder().setTitle(stream.name)
+        stream.artworkUrl?.takeIf { it.isNotBlank() }?.let { artwork ->
+            runCatching { metadataBuilder.setArtworkUri(Uri.parse(artwork)) }
+        }
+        resolvedController.setMediaItem(
+            MediaItem.Builder()
+                .setMediaId(stream.id)
+                .setUri(stream.url)
+                .setMediaMetadata(metadataBuilder.build())
+                .build()
+        )
+        resolvedController.prepare()
+        resolvedController.play()
+    }
+
+    private fun syncPlaybackState() {
+        val activeController = controller
+        uiStateFlow.update {
+            it.copy(
+                currentStreamId = activeController
+                    ?.currentMediaItem
+                    ?.mediaId
+                    ?.takeIf { mediaId -> mediaId.isNotBlank() }
+                    ?: it.currentStreamId,
+                isPlaying = activeController?.isPlaying == true,
+                isLoading = activeController?.playbackState == Player.STATE_BUFFERING,
+            )
+        }
+    }
+
+    private suspend fun emitPlaybackError(error: Throwable) {
+        uiStateFlow.update { it.copy(isPlaying = false, isLoading = false) }
+        eventMessages.emit(error.localizedMessage ?: text(R.string.playback_failed_message))
+    }
+
     private fun containsStream(url: String): Boolean {
         return appState.streams.any { it.url.equals(url, ignoreCase = true) }
     }
 
-    private fun stopAndClearCurrentStream() {
-        player.stop()
+    private suspend fun stopAndClearCurrentStream() {
+        runCatching {
+            ensureControllerConnected().apply {
+                stop()
+                clearMediaItems()
+            }
+        }
         uiStateFlow.update { it.copy(currentStreamId = null, isPlaying = false, isLoading = false) }
     }
 
@@ -620,8 +716,24 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     override fun onCleared() {
-        player.release()
+        controller?.removeListener(playbackListener)
+        controller = null
+        controllerFuture?.let { MediaController.releaseFuture(it) }
+        controllerFuture = null
         super.onCleared()
+    }
+
+    private suspend fun ListenableFuture<MediaController>.awaitController(
+        application: Application,
+    ): MediaController = suspendCancellableCoroutine { continuation ->
+        addListener(
+            {
+                runCatching { get() }
+                    .onSuccess { continuation.resume(it) }
+                    .onFailure { continuation.resumeWithException(it) }
+            },
+            ContextCompat.getMainExecutor(application)
+        )
     }
 
     private fun <T> List<T>.sortedByName(selector: (T) -> String = { (it as StreamItem).name }): List<T> {

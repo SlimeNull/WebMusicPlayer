@@ -8,6 +8,7 @@ import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -77,12 +78,14 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -91,14 +94,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import coil.compose.SubcomposeAsyncImage
-import coil.request.ImageRequest
 import com.silmenull.webmusicplayer.R
 import com.silmenull.webmusicplayer.models.AppTab
 import com.silmenull.webmusicplayer.models.FilterOption
 import com.silmenull.webmusicplayer.models.StreamItem
 import com.silmenull.webmusicplayer.models.StreamOriginKind
 import com.silmenull.webmusicplayer.models.SubscriptionItem
+import com.silmenull.webmusicplayer.playback.ArtworkCoverProcessor
 import com.silmenull.webmusicplayer.viewmodel.MainUiState
 import com.silmenull.webmusicplayer.viewmodel.MainViewModel
 import kotlinx.coroutines.launch
@@ -1060,15 +1062,18 @@ private fun NowPlayingCard(
             ) {
                 NowPlayingArtworkFallback(uiState.isPlaying)
                 val artworkUrl = currentStream?.artworkUrl?.takeIf { it.isNotBlank() }
-                if (artworkUrl != null) {
-                    SubcomposeAsyncImage(
-                        model = ImageRequest.Builder(context)
-                            .data(artworkUrl)
-                            .crossfade(true)
-                            .build(),
+                val artworkBitmap by produceState<android.graphics.Bitmap?>(
+                    initialValue = null,
+                    key1 = artworkUrl,
+                ) {
+                    value = artworkUrl?.let { ArtworkCoverProcessor.loadProcessedBitmap(context, it) }
+                }
+                artworkBitmap?.let { bitmap ->
+                    Image(
+                        bitmap = bitmap.asImageBitmap(),
                         contentDescription = null,
                         contentScale = ContentScale.Crop,
-                        modifier = Modifier.matchParentSize()
+                        modifier = Modifier.matchParentSize(),
                     )
                 }
             }

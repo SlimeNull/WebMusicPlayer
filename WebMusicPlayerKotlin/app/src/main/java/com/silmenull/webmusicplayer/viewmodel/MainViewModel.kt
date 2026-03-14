@@ -27,6 +27,7 @@ import com.silmenull.webmusicplayer.models.StreamItem
 import com.silmenull.webmusicplayer.models.StreamOriginKind
 import com.silmenull.webmusicplayer.models.SubscriptionImportOptions
 import com.silmenull.webmusicplayer.models.SubscriptionItem
+import com.silmenull.webmusicplayer.playback.ArtworkCoverProcessor
 import com.silmenull.webmusicplayer.playback.PlaybackService
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
@@ -608,19 +609,56 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     ) {
         val resolvedController = activeController ?: ensureControllerConnected()
         uiStateFlow.update { it.copy(currentStreamId = stream.id, isLoading = true) }
-        val metadataBuilder = MediaMetadata.Builder().setTitle(stream.name)
-        stream.artworkUrl?.takeIf { it.isNotBlank() }?.let { artwork ->
-            runCatching { metadataBuilder.setArtworkUri(Uri.parse(artwork)) }
-        }
         resolvedController.setMediaItem(
             MediaItem.Builder()
                 .setMediaId(stream.id)
                 .setUri(stream.url)
-                .setMediaMetadata(metadataBuilder.build())
+                .setMediaMetadata(buildMediaMetadata(stream))
                 .build()
         )
         resolvedController.prepare()
         resolvedController.play()
+
+        stream.artworkUrl?.takeIf { it.isNotBlank() }?.let { artworkUrl ->
+            viewModelScope.launch {
+                runCatching {
+                    updateArtworkMetadata(stream, artworkUrl)
+                }
+            }
+        }
+    }
+
+    private suspend fun updateArtworkMetadata(stream: StreamItem, artworkUrl: String) {
+        val artworkData = ArtworkCoverProcessor.loadProcessedBytes(getApplication(), artworkUrl) ?: return
+        val resolvedController = ensureControllerConnected()
+        if (resolvedController.currentMediaItem?.mediaId != stream.id) {
+            return
+        }
+
+        val currentIndex = resolvedController.currentMediaItemIndex
+        if (currentIndex < 0) {
+            return
+        }
+
+        resolvedController.replaceMediaItem(
+            currentIndex,
+            MediaItem.Builder()
+                .setMediaId(stream.id)
+                .setUri(stream.url)
+                .setMediaMetadata(buildMediaMetadata(stream, artworkData))
+                .build()
+        )
+    }
+
+    private fun buildMediaMetadata(
+        stream: StreamItem,
+        artworkData: ByteArray? = null,
+    ): MediaMetadata {
+        val metadataBuilder = MediaMetadata.Builder().setTitle(stream.name)
+        artworkData?.let {
+            metadataBuilder.setArtworkData(it, MediaMetadata.PICTURE_TYPE_FRONT_COVER)
+        }
+        return metadataBuilder.build()
     }
 
     private fun syncPlaybackState() {

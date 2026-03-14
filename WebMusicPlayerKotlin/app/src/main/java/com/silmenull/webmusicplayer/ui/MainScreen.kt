@@ -722,7 +722,7 @@ private fun SummaryCard(summary: String, modifier: Modifier) {
         shape = RoundedCornerShape(18.dp),
         color = MaterialTheme.colorScheme.primaryContainer,
         tonalElevation = 1.dp,
-        modifier = Modifier
+        modifier = modifier
     ) {
         Text(
             text = summary,
@@ -823,10 +823,11 @@ private fun StreamRow(
                             Icon(
                                 Icons.Default.Delete,
                                 endActionLabel,
+                                tint = MaterialTheme.colorScheme.onErrorContainer,
                                 modifier = Modifier
                                     .align(Alignment.CenterEnd)
                                     .clip(RoundedCornerShape(32.dp))
-                                    .background(MaterialTheme.colorScheme.surfaceVariant)
+                                    .background(MaterialTheme.colorScheme.errorContainer)
                                     .padding(8.dp)
                             )
                         }
@@ -937,6 +938,7 @@ private fun SubscriptionRow(
     onEdit: () -> Unit,
     onDelete: () -> Unit,
 ) {
+    val deleteLabel = stringResource(R.string.swipe_delete)
     val dismissState = rememberSwipeToDismissBoxState(
         confirmValueChange = { value ->
             if (value == SwipeToDismissBoxValue.EndToStart) {
@@ -950,15 +952,26 @@ private fun SubscriptionRow(
         state = dismissState,
         enableDismissFromStartToEnd = false,
         backgroundContent = {
-            DismissBackground(
-                state = dismissState,
-                startLabel = "",
-                endLabel = stringResource(R.string.swipe_delete),
-                startColor = Color.Transparent,
-                endColor = MaterialTheme.colorScheme.errorContainer,
-                startIcon = Icons.Filled.Edit,
-                endIcon = Icons.Filled.Delete,
-            )
+            Box(modifier = Modifier.fillMaxSize().padding(8.dp, 0.dp)) {
+                when (dismissState.dismissDirection) {
+                    SwipeToDismissBoxValue.EndToStart -> {
+                        Icon(
+                            Icons.Default.Delete,
+                            deleteLabel,
+                            tint = MaterialTheme.colorScheme.onErrorContainer,
+                            modifier = Modifier
+                                .align(Alignment.CenterEnd)
+                                .clip(RoundedCornerShape(32.dp))
+                                .background(MaterialTheme.colorScheme.errorContainer)
+                                .padding(8.dp)
+                        )
+                    }
+
+                    SwipeToDismissBoxValue.StartToEnd,
+                    SwipeToDismissBoxValue.Settled -> {
+                    }
+                }
+            }
         },
     ) {
         Surface(
@@ -1007,66 +1020,6 @@ private fun SubscriptionRow(
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
-            }
-        }
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun DismissBackground(
-    state: SwipeToDismissBoxState,
-    startLabel: String,
-    endLabel: String,
-    startColor: Color,
-    endColor: Color,
-    startIcon: ImageVector,
-    endIcon: ImageVector,
-) {
-    val direction = state.dismissDirection
-    val background = when (direction) {
-        SwipeToDismissBoxValue.StartToEnd -> startColor
-        SwipeToDismissBoxValue.EndToStart -> endColor
-        SwipeToDismissBoxValue.Settled -> MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f)
-    }
-    val alignment = when (direction) {
-        SwipeToDismissBoxValue.EndToStart -> Alignment.CenterEnd
-        else -> Alignment.CenterStart
-    }
-    val label = when (direction) {
-        SwipeToDismissBoxValue.EndToStart -> endLabel
-        else -> startLabel
-    }
-    val icon = when (direction) {
-        SwipeToDismissBoxValue.EndToStart -> endIcon
-        else -> startIcon
-    }
-
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(20.dp))
-            .background(background)
-            .padding(horizontal = 20.dp),
-        contentAlignment = alignment,
-    ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            if (direction == SwipeToDismissBoxValue.EndToStart) {
-                Text(text = label, color = MaterialTheme.colorScheme.onErrorContainer)
-                Spacer(modifier = Modifier.width(8.dp))
-                Icon(
-                    icon,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onErrorContainer
-                )
-            } else {
-                Icon(
-                    icon,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onTertiaryContainer
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(text = label, color = MaterialTheme.colorScheme.onTertiaryContainer)
             }
         }
     }

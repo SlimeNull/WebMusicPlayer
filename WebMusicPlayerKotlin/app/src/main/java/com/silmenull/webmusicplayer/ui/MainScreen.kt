@@ -980,7 +980,7 @@ private fun SubscriptionRow(
                 .clip(RoundedCornerShape(20.dp))
                 .clickable(onClick = onEdit),
             shape = RoundedCornerShape(20.dp),
-            color = MaterialTheme.colorScheme.surface,
+            color = MaterialTheme.colorScheme.surfaceContainer,
             tonalElevation = 1.dp,
         ) {
             Column(modifier = Modifier.padding(16.dp)) {

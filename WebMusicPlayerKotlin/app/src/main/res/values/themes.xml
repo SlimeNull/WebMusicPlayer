@@ -5,7 +5,7 @@
 
     <style name="Theme.WebMusicPlayer.Starting" parent="Theme.SplashScreen">
         <item name="windowSplashScreenBackground">@color/splash_background</item>
-        <item name="windowSplashScreenAnimatedIcon">@drawable/ic_splashscreen_foreground</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/ic_splashscreen_foreground_inset</item>
         <item name="postSplashScreenTheme">@style/Theme.WebMusicPlayer</item>
     </style>
 </resources>
